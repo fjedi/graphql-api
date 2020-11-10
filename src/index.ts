@@ -107,7 +107,7 @@ export type ServerParams<
   bodyParserOptions?: TodoAny;
   corsOptions?: CORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
-  routes: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
+  routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
 };
 
 export type GraphQLServerOptions = {
@@ -224,7 +224,7 @@ export class Server<
     // Init all API routes
     this.routes = new Set();
     //
-    routes.forEach(this.initRoute);
+    routes?.forEach(this.initRoute);
 
     // Custom middleware
     this.beforeMiddleware = new Set();
