@@ -98,12 +98,16 @@ export type Route<TAppContext, TDatabaseModels extends DatabaseModels> = {
   handlers: RouteHandler<TAppContext, TDatabaseModels>[];
 };
 
-export type ServerParams<TAppContext, TDatabaseModels extends DatabaseModels> = {
+export type ServerParams<
+  TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
+  TDatabaseModels extends DatabaseModels
+> = {
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions;
   bodyParserOptions?: TodoAny;
   corsOptions?: CORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
+  routes: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
 };
 
 export type GraphQLServerOptions = {
@@ -171,7 +175,14 @@ export class Server<
   koaHelmetOptions: { [k: string]: TodoAny };
 
   constructor(params: ServerParams<TAppContext, TDatabaseModels>) {
-    const { dbOptions, graphqlOptions, bodyParserOptions, corsOptions, wsServerOptions } = params;
+    const {
+      dbOptions,
+      graphqlOptions,
+      bodyParserOptions,
+      corsOptions,
+      wsServerOptions,
+      routes,
+    } = params;
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
     if (bodyParserOptions) {
@@ -210,8 +221,10 @@ export class Server<
       this.sslPort = 5001;
     }
 
-    // Create a set for routes -- to retrieve based on insertion order
+    // Init all API routes
     this.routes = new Set();
+    //
+    routes.forEach(this.initRoute);
 
     // Custom middleware
     this.beforeMiddleware = new Set();
@@ -273,7 +286,7 @@ export class Server<
       });
   }
 
-  // Init all API routes
+  // Init all API routes recursively
   initRoute(r: TodoAny | TodoAny[]): void {
     if (Array.isArray(r)) {
       flattenDeep(r).forEach((route) => this.initRoute(route));
