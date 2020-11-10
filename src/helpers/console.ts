@@ -10,11 +10,11 @@ import { getServerURL } from './env';
 
 // ----------------------
 export type ServerStartLogger = {
-  host: string;
-  port: number | string;
+  host?: string;
+  port?: number | string;
   allowSSL?: boolean;
-  chalk: Chalk;
-  bold: Chalk;
+  chalk?: Chalk;
+  bold?: Chalk;
   type: string;
 };
 
