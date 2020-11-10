@@ -62,6 +62,7 @@ import { initExceptionHandler } from './helpers/exception-handler';
 import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
 
 export type RouteMethod = 'get' | 'post' | 'delete' | 'update' | 'put' | 'patch';
+export type { Middleware, Next, ParameterizedContext, DefaultState, DefaultContext } from 'koa';
 
 // @ts-ignore
 type TodoAny = any;
