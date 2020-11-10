@@ -295,10 +295,11 @@ export class Server<
         return;
       }
       try {
-        const { sub } = decodeJWT(token) as { sub: string };
+        const decodedAuthToken = decodeJWT(token) as { sub: string };
+        ctx.state.authToken = token;
+        ctx.state.decodedAuthToken = decodedAuthToken;
         //
-        if (sub) {
-          ctx.state.token = token;
+        if (decodedAuthToken.sub) {
           //
           await authHandler(ctx as RouteContext<TAppContext, TDatabaseModels>);
         }
