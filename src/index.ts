@@ -49,13 +49,14 @@ import WebsocketHandler, { Socket, Server as WebsocketServer, ServerOptions } fr
 import wsRedis from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
-//
+// @ts-ignore
 import { ApolloServer, ApolloError, Config } from 'apollo-server-koa';
 // @ts-ignore
 import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
 // @ts-ignore
 import { FormatErrorWithContextExtension } from 'graphql-format-error-context-extension';
 import { RedisCache } from 'apollo-server-cache-redis';
+// @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
 //
 import { logServerStarted } from './helpers/console';
@@ -421,17 +422,17 @@ export class Server<
 
     // Attach any custom routes we may have set in userland
     // Handle both added by initRoute function
-    // and config.add*X*Route method
+    // and server.add*X*Route method
     this.routes.forEach((route) => {
       // @ts-ignore
-      this.router[route.method](`${config.graphQLEndpoint}${route.route}`, ...route.handlers);
+      this.router[route.method](`${this.graphqlOptions.url}${route.route}`, ...route.handlers);
     });
 
     // We'll also add a generic error handler, that prints out to the stdout.
     // Note: This is a 'lower-level' than `config.setErrorHandler()` because
     // it's not middleware -- it's for errors that happen at the server level
     this.koaApp.on('error', (error) => {
-      // This function should never show up, because `config.setErrorHandler()`
+      // This function should never show up, because `server.setErrorHandler()`
       // is already catching errors -- but just an FYI for what you might do.
       if (logger && typeof logger.error === 'function') {
         logger.error(error);
