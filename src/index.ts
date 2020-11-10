@@ -379,8 +379,6 @@ export class Server<
     if (typeof this.koaAppFunc === 'function') {
       await this.koaAppFunc(this.koaApp);
     }
-    // Connect the production routes to the server
-    this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
 
     // It's useful to see how long a request takes to respond.  Add the
     // timing to a HTTP Response header
@@ -541,6 +539,10 @@ export class Server<
     if (subscriptions) {
       apolloServer.installSubscriptionHandlers(httpServer);
     }
+
+    // Connect the REST API routes to the server
+    this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
+
     //
     httpServer.listen(this.port);
 
