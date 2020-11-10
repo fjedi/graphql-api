@@ -224,7 +224,7 @@ export class Server<
     // Init all API routes
     this.routes = new Set();
     //
-    routes?.forEach(this.initRoute);
+    routes?.forEach((r: TodoAny) => this.initRoute(r));
 
     // Custom middleware
     this.beforeMiddleware = new Set();
