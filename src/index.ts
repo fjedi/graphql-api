@@ -361,19 +361,18 @@ export class Server<
     });
   }
 
-  async bindModelsToDBConnection({
-    sync,
-    models,
-  }: {
+  async bindModelsToDBConnection(p: {
     sync?: boolean;
     models: TDatabaseModels;
+    migrationsPath?: string;
   }): Promise<void> {
+    const { sync, models, migrationsPath } = p;
     //
     // @ts-ignore
     this.db = await initDatabase<DatabaseModels>(this.dbConnection, {
       sync: sync || false,
       models,
-      migrationsPath: resolvePath(__dirname),
+      migrationsPath,
     });
   }
 
