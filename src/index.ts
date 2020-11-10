@@ -58,6 +58,7 @@ import { FormatErrorWithContextExtension } from 'graphql-format-error-context-ex
 import { RedisCache } from 'apollo-server-cache-redis';
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
 //
+import { logServerStarted } from './helpers/console';
 import { initExceptionHandler } from './helpers/exception-handler';
 import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
 
@@ -533,6 +534,11 @@ export class Server<
     }
     //
     httpServer.listen(this.port);
+
+    // Log to the terminal that we're ready for action
+    logServerStarted({
+      type: 'server',
+    });
 
     return httpServer;
   }

@@ -3,7 +3,11 @@
 // Environment-aware functions
 
 // Get the protocol://host:port of where the current server would bind
-export function getServerURL(host = process.env.HOST, port = process.env.PORT, allowSSL = true) {
+export function getServerURL(
+  host = process.env.HOST,
+  port = process.env.PORT,
+  allowSSL = true,
+): string {
   // Check for SSL
   if (allowSSL && process.env.SSL_PORT) {
     const stub = `https://${host || process.env.HOST}`;
