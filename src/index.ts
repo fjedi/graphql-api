@@ -514,9 +514,8 @@ export class Server<
                 authToken = get(Cookie.parse(cookies), 'token');
               }
             }
-            const sessionId = authToken
-              ? this.koaApp.context.db.models.User.getIdFromToken(authToken)
-              : null;
+            // @ts-ignore
+            const sessionId = authToken ? this.db?.models.User.getIdFromToken(authToken) : null;
             //
             return sessionId;
           },
@@ -526,9 +525,11 @@ export class Server<
       context: ({ ctx, connection }) => {
         //
         const context = get(connection, 'context', ctx);
+        context.db = this.db;
         // Create facebook dataloader context for better performance
+        // @ts-ignore
         // eslint-disable-next-line no-param-reassign
-        context.state.dataloaderContext = context.db.helpers.createDatabaseContext();
+        context.state.dataloaderContext = this.db?.helpers.createDatabaseContext();
         //
         return context;
       },
