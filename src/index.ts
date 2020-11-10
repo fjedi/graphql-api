@@ -46,7 +46,7 @@ import { logger, Logger } from '@fjedi/logger';
 import { decodeJWT } from '@fjedi/jwt';
 // Socket.io
 import WebsocketHandler, { Socket, Server as WebsocketServer, ServerOptions } from 'socket.io';
-import { wsRedis } from 'socket.io-redis';
+import wsRedis from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
 //
