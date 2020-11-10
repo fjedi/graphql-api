@@ -373,6 +373,15 @@ export class Server<
     // eslint-disable-next-line no-param-reassign
     this.koaApp.context.sentry = Sentry;
 
+    /* CUSTOM APP INSTANTIATION */
+    // Pass the `app` to do anything we need with it in userland. Useful for
+    // custom instantiation that doesn't fit into the middleware/route functions
+    if (typeof this.koaAppFunc === 'function') {
+      await this.koaAppFunc(this.koaApp);
+    }
+    // Connect the production routes to the server
+    this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
+
     // It's useful to see how long a request takes to respond.  Add the
     // timing to a HTTP Response header
     this.koaApp.use(async (ctx, next) => {
