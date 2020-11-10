@@ -558,7 +558,7 @@ export class Server<
     return ws;
   }
 
-  async joinRoom(socket: Socket, roomId: string): Promise<void> {
+  async joinWSRoom(socket: Socket, roomId: string): Promise<void> {
     // @ts-ignore
     this.ws?.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`, (err: Error) => {
       if (err) {
