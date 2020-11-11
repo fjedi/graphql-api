@@ -2,15 +2,7 @@
 import isValidPort from 'validator/lib/isPort';
 import http from 'http';
 import { createHttpTerminator } from 'http-terminator';
-import Koa, {
-  // @ts-ignore
-  App,
-  Middleware,
-  Next,
-  ParameterizedContext,
-  DefaultState,
-  DefaultContext,
-} from 'koa';
+import Koa, { Middleware, Next, ParameterizedContext, DefaultState, DefaultContext } from 'koa';
 // Koa Router, for handling REST API requests
 import KoaRouter, { IParamMiddleware } from 'koa-router';
 // Enable cross-origin requests
@@ -48,7 +40,7 @@ import WebsocketHandler, { Socket, Server as WebsocketServer, ServerOptions } fr
 import wsRedis from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
-// @ts-ignore
+//
 import { ApolloServer, ApolloError, Config } from 'apollo-server-koa';
 // @ts-ignore
 import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
