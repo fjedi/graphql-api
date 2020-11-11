@@ -21,7 +21,7 @@ import ms from 'microseconds';
 import { get, pick, flattenDeep, merge } from 'lodash';
 //
 import { Sequelize, ValidationError, OptimisticLockError } from 'sequelize';
-import { applyMiddleware, IMiddlewareGenerator } from 'graphql-middleware';
+import { applyMiddleware } from 'graphql-middleware';
 import { TFunction, i18n } from 'i18next';
 import {
   createConnection,
@@ -61,6 +61,8 @@ import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
 
 export type RouteMethod = 'get' | 'post' | 'delete' | 'update' | 'put' | 'patch';
 export type { Middleware, Next, ParameterizedContext, DefaultState, DefaultContext } from 'koa';
+//
+export * as shield from 'graphql-shield';
 
 // @ts-ignore
 type TodoAny = any;
@@ -100,16 +102,19 @@ export type ServerParams<
   TDatabaseModels extends DatabaseModels
 > = {
   dbOptions: DatabaseConnectionOptions;
-  graphqlOptions: GraphQLServerOptions;
+  graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
   corsOptions?: CORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
 };
 
-export type GraphQLServerOptions = Config & {
+export type GraphQLServerOptions<
+  TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
+  TDatabaseModels extends DatabaseModels
+> = Config & {
   path: string;
-  resolvers: (p: RedisPubSub) => Config['resolvers'];
+  resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
   permissions?: {
     rules: PermissionRules;
     options?: PermissionRulesOptions;
@@ -162,8 +167,7 @@ export class Server<
   pubsub: RedisPubSub;
 
   // Graphql-related staff
-  // graphQLServer: boolean;
-  graphqlOptions: GraphQLServerOptions;
+  graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
 
   // Websockets
   ws?: WebsocketServer;
@@ -494,17 +498,21 @@ export class Server<
     await this.startWSServer(httpServer, this.wsServerOptions);
 
     // GraphQL Server
-    const { typeDefs, resolvers, permissions, subscriptions, playground } = this.graphqlOptions;
+    const {
+      typeDefs,
+      resolvers,
+      permissions,
+      subscriptions,
+      playground,
+      schemaDirectives,
+    } = this.graphqlOptions;
     if (!typeDefs) {
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
     let schema = makeExecutableSchema({
       typeDefs,
-      resolvers: resolvers(this.pubsub),
-      schemaDirectives: {
-        // upperCase: UpperCaseDirective,
-        // formatString: UpperCaseDirective,
-      },
+      resolvers: resolvers(this),
+      schemaDirectives,
     });
 
     if (graphQLSentryMiddleware) {
