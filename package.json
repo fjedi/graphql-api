@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "NPM package template",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -83,6 +83,7 @@
     "geoip-lite": "1.4.2",
     "git-rev-sync": "3.0.1",
     "graphql": "15.4.0",
+    "graphql-extensions": "0.12.6",
     "graphql-format-error-context-extension": "0.2.15",
     "graphql-middleware": "4.0.2",
     "graphql-middleware-sentry": "3.2.1",
