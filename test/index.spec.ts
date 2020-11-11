@@ -1,5 +1,5 @@
 process.env.AUTH_JWT_SECRET = '77dg2DVQyDqrWYWFRLSaMJrMHpB9LWCZ';
-import { Server, WSRequest } from '../src/index';
+import { Server, WSRequest } from '../src';
 //
 const NODE_INSTANCES_NUMBER = parseInt(process.env.NODE_INSTANCES_NUMBER || '', 10) || 1;
 const DB_MAX_CONNECTIONS = parseInt(process.env.DB_MAX_CONNECTIONS || '', 10) || 150;

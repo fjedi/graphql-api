@@ -1,4 +1,4 @@
-module.exports = {
+const rules = {
   plugins: ['@typescript-eslint', 'prettier', 'import'],
   extends: [
     'airbnb-typescript/base',
@@ -10,6 +10,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
+    jsx: true,
+    project: 'tsconfig-cjs.json'
   },
   env: {
     es6: true,
@@ -17,12 +19,6 @@ module.exports = {
     node: true,
   },
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaVersion: 2017,
-    sourceType: 'module',
-    jsx: true,
-    project: 'tsconfig-cjs.json',
-  },
   rules: {
     'no-debugger': 'off',
     'no-console': 1,
@@ -32,3 +28,5 @@ module.exports = {
     '@typescript-eslint/ban-ts-comment': 'off',
   },
 };
+
+module.exports = rules;

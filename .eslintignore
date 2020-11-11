@@ -5,3 +5,4 @@ coverage
 jest.config.js
 lib
 .eslintrc.js
+.eslintrc.cjs
