@@ -504,7 +504,7 @@ export class Server<
       ],
       plugins: [
         ResponseCachePlugin({
-          sessionId: (requestContext) => {
+          sessionId: (requestContext: RouteContext<TAppContext, TDatabaseModels>) => {
             // @ts-ignore
             let authToken = requestContext.request.http.headers.get('authorization');
             if (!authToken) {
@@ -522,7 +522,7 @@ export class Server<
         }),
       ],
       // Bind the current request context, so it's accessible within GraphQL
-      context: ({ ctx, connection }) => {
+      context: ({ ctx, connection }: TodoAny) => {
         //
         const context = get(connection, 'context', ctx);
         context.db = this.db;
