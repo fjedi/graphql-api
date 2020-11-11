@@ -21,7 +21,6 @@ import ms from 'microseconds';
 import { get, pick, flattenDeep } from 'lodash';
 //
 import { Sequelize, ValidationError, OptimisticLockError } from 'sequelize';
-import { GraphQLSchema } from 'graphql';
 import { applyMiddleware, IMiddlewareGenerator } from 'graphql-middleware';
 import { TFunction, i18n } from 'i18next';
 import {
@@ -41,11 +40,12 @@ import wsRedis from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
 //
-import { ApolloServer, ApolloError, Config } from 'apollo-server-koa';
+import { ApolloServer, ApolloError, Config, makeExecutableSchema } from 'apollo-server-koa';
 // @ts-ignore
 import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
 // @ts-ignore
 import { FormatErrorWithContextExtension } from 'graphql-format-error-context-extension';
+import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
@@ -102,12 +102,10 @@ export type ServerParams<
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
 };
 
-export type GraphQLServerOptions = {
-  url: string;
-  graphiQL?: boolean;
-  schema: GraphQLSchema;
+export type GraphQLServerOptions = Config & {
+  path: string;
+  resolvers: (p: RedisPubSub) => Config['resolvers'];
   permissions?: IMiddlewareGenerator<TodoAny, TodoAny, TodoAny>;
-  subscriptions?: Config['subscriptions'];
 };
 
 export type WSRequest = {
@@ -153,6 +151,7 @@ export class Server<
   //
   logger: Logger;
   redis: RedisClient;
+  pubsub: RedisPubSub;
 
   // Graphql-related staff
   // graphQLServer: boolean;
@@ -188,6 +187,12 @@ export class Server<
     }
     //
     this.redis = redis;
+    this.pubsub = new RedisPubSub({
+      connection: {
+        host: redis.options.host,
+        port: redis.options.port,
+      },
+    });
     this.logger = logger;
     //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
@@ -319,6 +324,15 @@ export class Server<
     });
   }
 
+  static setAuthCookie(context: ParameterizedContext, token: string, cookieName = 'token'): void {
+    // Saving user's token to cookies
+    context.cookies.set(cookieName, token, {
+      signed: true,
+      httpOnly: true,
+      overwrite: true,
+    });
+  }
+
   static formatError(
     graphQLError: ApolloError,
     context: RouteContext<TodoAny, TodoAny>,
@@ -394,6 +408,21 @@ export class Server<
       ctx.set('X-Response-Time', `${total / 1e3}ms`);
     });
 
+    // Save client's ip to the context
+    this.koaApp.use(async (ctx, next) => {
+      ctx.state.countryCode = ctx.get('cf-ipcountry');
+      ctx.state.userAgent = ctx.get('user-agent');
+      ctx.state.ip =
+        process.env.HOST === 'localhost'
+          ? '127.0.0.1'
+          : ctx.get('Cf-Connecting-Ip') ||
+            ctx.get('X-Real-Ip') ||
+            ctx.get('X-Forwarded-For') ||
+            ctx.request.ip;
+      //
+      await next();
+    });
+
     // Add 'before' middleware that needs to be invoked before the per-request store has instantiated
     this.beforeMiddleware.forEach((middlewareFunc) => this.koaApp.use(middlewareFunc));
 
@@ -454,23 +483,28 @@ export class Server<
     });
 
     //
-    this.startWSServer(httpServer, this.wsServerOptions);
+    await this.startWSServer(httpServer, this.wsServerOptions);
 
     // GraphQL Server
-    const {
-      schema,
-      permissions,
-      graphiQL = process.env.NODE_ENV !== 'production',
-      subscriptions,
-    } = this.graphqlOptions;
-    let schemaWithMiddlewares = schema;
+    const { typeDefs, resolvers, permissions, subscriptions, playground } = this.graphqlOptions;
+    if (!typeDefs) {
+      throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
+    }
+    let schema = makeExecutableSchema({
+      typeDefs,
+      resolvers: resolvers(this.pubsub),
+      schemaDirectives: {
+        // upperCase: UpperCaseDirective,
+        // formatString: UpperCaseDirective,
+      },
+    });
 
     if (graphQLSentryMiddleware) {
-      schemaWithMiddlewares = applyMiddleware(schema, graphQLSentryMiddleware);
+      schema = applyMiddleware(schema, graphQLSentryMiddleware);
     }
     //
     if (permissions) {
-      schemaWithMiddlewares = applyMiddleware(schema, permissions);
+      schema = applyMiddleware(schema, permissions);
     }
     // Attach the GraphQL schema to the server, and hook it up to the endpoint
     // to listen to POST requests
@@ -482,10 +516,11 @@ export class Server<
     };
     const apolloServer = new ApolloServer({
       // Attach the GraphQL schema
-      schema: schemaWithMiddlewares,
-      playground: graphiQL,
+      schema,
+      playground,
       debug: process.env.NODE_ENV !== 'production',
       tracing: process.env.NODE_ENV !== 'production',
+      logger: this.logger,
       introspection: true,
       engine: engineOptions,
       subscriptions,
@@ -535,7 +570,7 @@ export class Server<
     apolloServer.applyMiddleware({
       app: this.koaApp,
       // server: apolloServer,
-      path: this.graphqlOptions.url,
+      path: this.graphqlOptions.path,
       //
       bodyParserConfig: this.bodyParserOptions,
       cors: this.corsOptions,
