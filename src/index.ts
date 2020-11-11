@@ -18,7 +18,7 @@ import cookiesMiddleware from 'universal-cookie-koa';
 // High-precision timing, so we can debug response time to serve a request
 // @ts-ignore
 import ms from 'microseconds';
-import { get, pick, flattenDeep } from 'lodash';
+import { get, pick, flattenDeep, merge } from 'lodash';
 //
 import { Sequelize, ValidationError, OptimisticLockError } from 'sequelize';
 import { applyMiddleware, IMiddlewareGenerator } from 'graphql-middleware';
@@ -41,6 +41,11 @@ import initWSEventEmitter from 'socket.io-emitter';
 
 //
 import { ApolloServer, ApolloError, Config, makeExecutableSchema } from 'apollo-server-koa';
+import { rule, shield, and, not, or, allow, chain, inputRule } from 'graphql-shield';
+import {
+  IRules as PermissionRules,
+  IOptions as PermissionRulesOptions,
+} from 'graphql-shield/dist/types';
 // @ts-ignore
 import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
 // @ts-ignore
@@ -105,7 +110,10 @@ export type ServerParams<
 export type GraphQLServerOptions = Config & {
   path: string;
   resolvers: (p: RedisPubSub) => Config['resolvers'];
-  permissions?: IMiddlewareGenerator<TodoAny, TodoAny, TodoAny>;
+  permissions?: {
+    rules: PermissionRules;
+    options?: PermissionRulesOptions;
+  };
 };
 
 export type WSRequest = {
@@ -503,8 +511,20 @@ export class Server<
       schema = applyMiddleware(schema, graphQLSentryMiddleware);
     }
     //
-    if (permissions) {
-      schema = applyMiddleware(schema, permissions);
+    if (permissions?.rules) {
+      const { rules } = permissions;
+      const options = merge(
+        {
+          debug: process.env.NODE_ENV === 'development',
+          allowExternalErrors: true,
+          fallbackRule: allow,
+          fallbackError: new DefaultError('Access is denied', {
+            status: 403,
+          }),
+        },
+        permissions.options,
+      );
+      schema = applyMiddleware(schema, shield(rules, options));
     }
     // Attach the GraphQL schema to the server, and hook it up to the endpoint
     // to listen to POST requests
