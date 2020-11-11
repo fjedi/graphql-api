@@ -1,6 +1,5 @@
 /* eslint-disable lines-between-class-members  */
 import isValidPort from 'validator/lib/isPort';
-import { resolve as resolvePath } from 'path';
 import http from 'http';
 import { createHttpTerminator } from 'http-terminator';
 import Koa, {
@@ -105,7 +104,7 @@ export type ServerParams<
 > = {
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions;
-  bodyParserOptions?: TodoAny;
+  bodyParserOptions?: bodyParser.Options;
   corsOptions?: CORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
@@ -146,13 +145,13 @@ export class Server<
   routeParams: Set<RouteParam>;
   middleware: Set<Middleware>;
   beforeMiddleware: Set<Middleware>;
-  koaAppFunc?: (app: TodoAny) => Promise<any>;
+  koaAppFunc?: (app: Koa) => Promise<void>;
   handler404?: (ctx: RouteContext<TAppContext, TDatabaseModels>) => Promise<any>;
   errorHandler?: ErrorHandler<TAppContext, TDatabaseModels>;
 
   // Middlewares
   // Enable body parsing by default.  Leave `koa-bodyparser` opts as default
-  bodyParserOptions: TodoAny;
+  bodyParserOptions: bodyParser.Options;
   // CORS options for `koa-cors`
   corsOptions: CORSOptions;
 
@@ -504,7 +503,7 @@ export class Server<
       ],
       plugins: [
         ResponseCachePlugin({
-          sessionId: (requestContext: RouteContext<TAppContext, TDatabaseModels>) => {
+          sessionId: (requestContext) => {
             // @ts-ignore
             let authToken = requestContext.request.http.headers.get('authorization');
             if (!authToken) {
@@ -522,7 +521,7 @@ export class Server<
         }),
       ],
       // Bind the current request context, so it's accessible within GraphQL
-      context: ({ ctx, connection }: TodoAny) => {
+      context: ({ ctx, connection }) => {
         //
         const context = get(connection, 'context', ctx);
         context.db = this.db;
@@ -611,14 +610,8 @@ export class Server<
 
   // Get access to Koa's `app` instance, for adding custom instantiation
   // or doing something that's not covered by other functions
-  getKoaApp(func: (app: App) => TodoAny): void {
+  getKoaApp(func: (app: Koa) => Promise<void>): void {
     this.koaAppFunc = func;
-  }
-
-  setBodyParserOptions(opt: TodoAny): void {
-    if (opt) {
-      this.bodyParserOptions = opt;
-    }
   }
 
   setKoaHelmetOptions(opt: TodoAny): void {
