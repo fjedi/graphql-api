@@ -111,7 +111,7 @@ export function detectContextLang(
   // eslint-disable-next-line no-plusplus
   for (let i = 0, len = order.length; i < len; i++) {
     // @ts-ignore
-    const detector = Server.LANG_DETECTORS[order[i]];
+    const detector = LANG_DETECTORS[order[i]];
     let lng;
     if (detector) {
       lng = detector(context, options);
