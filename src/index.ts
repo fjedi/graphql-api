@@ -161,7 +161,7 @@ export type ServerParams<
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
   multiLangOptions?: MultiLangOptions;
-  contextHelpers?: ContextHelpers;
+  contextHelpers?: Partial<ContextHelpers>;
 };
 
 export type GraphQLServerOptions<
@@ -264,7 +264,7 @@ export class Server<
     }
     if (multiLangOptions?.translations) {
       this.multiLangOptions = multiLangOptions;
-      const { backend, fallbackLng, translations } = multiLangOptions;
+      const { backend, translations } = multiLangOptions;
       ['backend.loadPath', 'backend.addPath', 'fallbackLng', 'translations'].forEach(
         (optionKey) => {
           const optionValue = get(multiLangOptions, optionKey);
