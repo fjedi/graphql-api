@@ -63,9 +63,13 @@ import i18next, {
 // @ts-ignore
 import i18nextBackend from 'i18next-sync-fs-backend';
 //
+import { uuid } from './helpers/uuid';
 import { logServerStarted } from './helpers/console';
 import { initExceptionHandler } from './helpers/exception-handler';
 import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
+import time from './helpers/time';
+import BigNumber from './helpers/numbers';
+import * as transliterator from './helpers/transliterator';
 import {
   setContextLang,
   detectContextLang,
@@ -85,7 +89,13 @@ export type KoaApp<TAppContext, TDatabaseModels extends DatabaseModels> = Koa & 
   context: RouteContext<TAppContext, TDatabaseModels>;
 };
 
-export type ContextHelpers = { [k: string]: unknown };
+export type ContextHelpers = {
+  time: typeof time;
+  uuid: typeof uuid;
+  transliterator: typeof transliterator;
+  BigNumber: typeof BigNumber;
+  [k: string]: unknown;
+};
 
 export type ContextState = DefaultState & {
   ip: string;
@@ -108,7 +118,7 @@ export type RouteContext<
   language: string;
   logger: Logger;
   sentry: typeof Sentry;
-  helpers?: ContextHelpers;
+  helpers: ContextHelpers;
 } & TAppContext;
 
 export type RouteHandler<TAppContext, TDatabaseModels extends DatabaseModels> = (
@@ -402,9 +412,17 @@ export class Server<
     // eslint-disable-next-line no-param-reassign
     this.koaApp.context.sentry = Sentry;
     //
-    this.koaApp.context.helpers = {};
+    this.koaApp.context.helpers = {
+      time,
+      uuid,
+      transliterator,
+      BigNumber,
+    };
     if (contextHelpers) {
-      this.koaApp.context.helpers = contextHelpers;
+      this.koaApp.context.helpers = {
+        ...this.koaApp.context.helpers,
+        ...contextHelpers,
+      };
     }
   }
 
