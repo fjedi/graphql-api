@@ -652,6 +652,9 @@ export class Server<
     //
     await this.startWSServer(httpServer, this.wsServerOptions);
 
+    // Connect the REST API routes to the server
+    this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
+
     // GraphQL Server
     const {
       typeDefs,
@@ -735,6 +738,7 @@ export class Server<
         //
         const context = get(connection, 'context', ctx);
         context.db = this.db;
+        context.helpers = this.koaApp.context.helpers;
         // Create facebook dataloader context for better performance
         // @ts-ignore
         // eslint-disable-next-line no-param-reassign
@@ -762,9 +766,6 @@ export class Server<
     if (subscriptions) {
       apolloServer.installSubscriptionHandlers(httpServer);
     }
-
-    // Connect the REST API routes to the server
-    this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
 
     //
     httpServer.listen(this.port);
