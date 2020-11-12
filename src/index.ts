@@ -2,7 +2,7 @@
 import isValidPort from 'validator/lib/isPort';
 import http from 'http';
 import { createHttpTerminator } from 'http-terminator';
-import Koa, { Middleware, Next, ParameterizedContext, DefaultState, DefaultContext } from 'koa';
+import Koa, { Middleware, Next, ParameterizedContext, DefaultContext, DefaultState } from 'koa';
 // Koa Router, for handling REST API requests
 import KoaRouter, { IParamMiddleware } from 'koa-router';
 // Enable cross-origin requests
@@ -22,7 +22,6 @@ import { get, pick, flattenDeep, merge } from 'lodash';
 //
 import { Sequelize, ValidationError, OptimisticLockError } from 'sequelize';
 import { applyMiddleware } from 'graphql-middleware';
-import { TFunction, i18n } from 'i18next';
 import {
   createConnection,
   initDatabase,
@@ -54,28 +53,59 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
+// Multi-lang support
+import i18next, { TFunction, i18n } from 'i18next';
+// @ts-ignore
+import i18nextBackend from 'i18next-sync-fs-backend';
 //
 import { logServerStarted } from './helpers/console';
 import { initExceptionHandler } from './helpers/exception-handler';
 import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
+import {
+  setContextLang,
+  detectContextLang,
+  LANG_DETECTION_DEFAULT_OPTIONS,
+  LANG_DETECTION_DEFAULT_ORDER,
+} from './helpers/i18n';
 
 export type RouteMethod = 'get' | 'post' | 'delete' | 'update' | 'put' | 'patch';
-export type { Middleware, Next, ParameterizedContext, DefaultState, DefaultContext } from 'koa';
+export type { Middleware, Next, ParameterizedContext, DefaultContext, DefaultState } from 'koa';
 //
 export * as shield from 'graphql-shield';
 
 // @ts-ignore
 type TodoAny = any;
 
+export type KoaApp<TAppContext, TDatabaseModels extends DatabaseModels> = Koa & {
+  context: RouteContext<TAppContext, TDatabaseModels>;
+};
+
+export type ContextHelpers = { [k: string]: unknown };
+
+export type ContextState = DefaultState & {
+  ip: string;
+  language: string;
+  languageCode: string;
+  countryCode?: string;
+  userAgent?: string;
+  authToken?: string;
+  decodedAuthToken?: { [k: string]: unknown };
+};
+
 export type RouteContext<
   TAppContext,
   TDatabaseModels extends DatabaseModels
-> = ParameterizedContext<DefaultState, DefaultContext> & {
+> = ParameterizedContext<ContextState, DefaultContext> & {
   db: DatabaseConnection<TDatabaseModels>;
   redis: RedisClient;
   t: TFunction;
   i18next: i18n;
+  language: string;
+  logger: Logger;
+  sentry: typeof Sentry;
+  helpers?: ContextHelpers;
 } & TAppContext;
+
 export type RouteHandler<TAppContext, TDatabaseModels extends DatabaseModels> = (
   ctx: RouteContext<TAppContext, TDatabaseModels>,
   next?: Next,
@@ -97,8 +127,15 @@ export type Route<TAppContext, TDatabaseModels extends DatabaseModels> = {
   handlers: RouteHandler<TAppContext, TDatabaseModels>[];
 };
 
+export type MultiLangOptions = {
+  loadPath: string;
+  addPath: string;
+  fallbackLng: string;
+  translations: JSON[];
+};
+
 export type ServerParams<
-  TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
+  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = {
   dbOptions: DatabaseConnectionOptions;
@@ -107,10 +144,13 @@ export type ServerParams<
   corsOptions?: CORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
+  multiLangOptions?: MultiLangOptions;
+  translations?: JSON[];
+  contextHelpers?: ContextHelpers;
 };
 
 export type GraphQLServerOptions<
-  TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
+  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = Config & {
   path: string;
@@ -135,19 +175,19 @@ export type WSSocket = Socket;
 export type WSServerOptions = ServerOptions;
 
 export class Server<
-  TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
+  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > {
   environment: 'production' | 'development';
   host: string;
   port: number;
   sslPort: number;
-  koaApp: Koa;
+  koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
   routeParams: Set<RouteParam>;
-  middleware: Set<Middleware>;
-  beforeMiddleware: Set<Middleware>;
+  middleware: Set<Middleware<ContextState, RouteContext<TAppContext, TDatabaseModels>>>;
+  beforeMiddleware: Set<Middleware<ContextState, RouteContext<TAppContext, TDatabaseModels>>>;
   koaAppFunc?: (app: Koa) => Promise<void>;
   handler404?: (ctx: RouteContext<TAppContext, TDatabaseModels>) => Promise<any>;
   errorHandler?: ErrorHandler<TAppContext, TDatabaseModels>;
@@ -157,6 +197,14 @@ export class Server<
   bodyParserOptions: bodyParser.Options;
   // CORS options for `koa-cors`
   corsOptions: CORSOptions;
+
+  // Multi-lang support
+  static LANG_DETECTION_DEFAULT_OPTIONS = LANG_DETECTION_DEFAULT_OPTIONS;
+  static LANG_DETECTION_DEFAULT_ORDER = LANG_DETECTION_DEFAULT_ORDER;
+  static DEFAULT_LANGUAGE = 'en';
+  static detectContextLang = detectContextLang;
+  static setContextLang = setContextLang;
+  multiLangOptions?: MultiLangOptions;
 
   // Database
   dbConnection: Sequelize;
@@ -185,6 +233,8 @@ export class Server<
       corsOptions,
       wsServerOptions,
       routes,
+      multiLangOptions,
+      contextHelpers,
     } = params;
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
@@ -196,6 +246,49 @@ export class Server<
     }
     if (wsServerOptions) {
       this.wsServerOptions = wsServerOptions;
+    }
+    if (multiLangOptions?.translations) {
+      this.multiLangOptions = multiLangOptions;
+      const { loadPath, addPath, fallbackLng, translations } = multiLangOptions;
+      Object.keys(
+        pick(multiLangOptions, ['loadPath', 'addPath', 'fallbackLng', 'translations']),
+      ).forEach((option) => {
+        const opt = option as keyof MultiLangOptions;
+        if (!multiLangOptions[opt]) {
+          throw new DefaultError(`"${opt}" is a required option to init multi-lang support`, {
+            meta: multiLangOptions,
+          });
+        }
+      });
+      // Init multi-lang support
+      i18next.use(i18nextBackend).init({
+        // debug: true,
+        // This is necessary for this sync version
+        // of the backend to work:
+        initImmediate: false,
+        backend: {
+          // translation resources
+          loadPath: `${loadPath}/{{lng}}.json`,
+          addPath: `${addPath}/{{lng}}.missing.json`,
+        },
+        // preload: ['zh', 'en', 'ru', 'es'], // must know what languages to use
+        preload: Object.keys(translations), // must know what languages to use
+        fallbackLng,
+        load: 'languageOnly', // we only provide en, de -> no region specific locals like en-US, de-DE
+
+        detection: {
+          // order and from where user language should be detected
+          order: ['path', 'querystring', 'cookie', 'session', 'header'],
+
+          // keys or params to lookup language from
+          lookupQuerystring: 'lang',
+          lookupCookie: 'lang',
+          lookupSession: 'lang',
+
+          // cache user language on
+          caches: ['cookie'],
+        },
+      });
     }
     //
     this.redis = redis;
@@ -292,7 +385,17 @@ export class Server<
             ctx.body = 'There was an error. Please try again later.';
           }
         }
-      });
+      }) as KoaApp<TAppContext, TDatabaseModels>;
+
+    // eslint-disable-next-line no-param-reassign
+    this.koaApp.context.logger = this.logger;
+    // eslint-disable-next-line no-param-reassign
+    this.koaApp.context.sentry = Sentry;
+    //
+    this.koaApp.context.helpers = {};
+    if (contextHelpers) {
+      this.koaApp.context.helpers = contextHelpers;
+    }
   }
 
   // Init all API routes recursively
@@ -306,6 +409,38 @@ export class Server<
       return;
     }
     this.logger.error('Failed to init route', r);
+  }
+
+  initMultiLangMiddleware(): void {
+    if (!this.multiLangOptions?.fallbackLng) {
+      throw new DefaultError(
+        'You must set "fallbackLng" inside "multiLangOptions" to enable multi-lang middleware',
+        {
+          meta: this.multiLangOptions,
+        },
+      );
+    }
+    const { fallbackLng } = this.multiLangOptions;
+    //
+    this.addMiddleware(
+      async (ctx, next): Promise<void> => {
+        //
+        const i18nextInstance = i18next.cloneInstance();
+        //
+        ctx.i18next = i18nextInstance;
+        // Saving language to the current koaContext
+        const lng = detectContextLang(ctx, Server.LANG_DETECTION_DEFAULT_OPTIONS);
+        await i18nextInstance.changeLanguage(lng || fallbackLng);
+        Server.setContextLang(ctx, lng, Server.LANG_DETECTION_DEFAULT_OPTIONS);
+        //
+        ctx.t = function translate(...args: any) {
+          // @ts-ignore
+          return ctx.i18next.t.apply(ctx.i18next, [...args]);
+        };
+        //
+        await next();
+      },
+    );
   }
 
   initAuthMiddleware(
@@ -352,7 +487,7 @@ export class Server<
     const {
       extensions: { exception, code },
     } = graphQLError;
-    const { t: translate, i18next } = context;
+    const { t: translate } = context;
 
     if (
       !['SequelizeValidationError', 'ValidationError'].includes(get(exception, 'name')) &&
@@ -364,7 +499,7 @@ export class Server<
         logger.error('formatError', graphQLError);
       }
       //
-      const message = i18next.exists(graphQLError.message)
+      const message = context.i18next.exists(graphQLError.message)
         ? graphQLError.message
         : 'The request failed, please try again later or contact technical support';
 
@@ -398,11 +533,6 @@ export class Server<
   // Enables internal GraphQL server.  Default GraphQL and GraphiQL endpoints
   // can be overridden
   async startServer(): Promise<http.Server> {
-    // eslint-disable-next-line no-param-reassign
-    this.koaApp.context.logger = this.logger;
-    // eslint-disable-next-line no-param-reassign
-    this.koaApp.context.sentry = Sentry;
-
     /* CUSTOM APP INSTANTIATION */
     // Pass the `app` to do anything we need with it in userland. Useful for
     // custom instantiation that doesn't fit into the middleware/route functions
@@ -697,11 +827,15 @@ export class Server<
 
   // Add custom middleware.  This should be an async func, for use with Koa.
   // There are two entry points - 'before' and 'after'
-  addBeforeMiddleware(middlewareFunc: Middleware): void {
+  addBeforeMiddleware(
+    middlewareFunc: Middleware<ContextState, RouteContext<TAppContext, TDatabaseModels>>,
+  ): void {
     this.beforeMiddleware.add(middlewareFunc);
   }
 
-  addMiddleware(middlewareFunc: Middleware): void {
+  addMiddleware(
+    middlewareFunc: Middleware<ContextState, RouteContext<TAppContext, TDatabaseModels>>,
+  ): void {
     this.middleware.add(middlewareFunc);
   }
 
