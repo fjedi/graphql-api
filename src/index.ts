@@ -412,18 +412,15 @@ export class Server<
     // eslint-disable-next-line no-param-reassign
     this.koaApp.context.sentry = Sentry;
     //
-    this.koaApp.context.helpers = {
-      time,
-      uuid,
-      transliterator,
-      BigNumber,
-    };
-    if (contextHelpers) {
-      this.koaApp.context.helpers = {
-        ...this.koaApp.context.helpers,
-        ...contextHelpers,
-      };
-    }
+    this.koaApp.context.helpers = merge(
+      {
+        time,
+        uuid,
+        transliterator,
+        BigNumber,
+      },
+      contextHelpers || {},
+    );
   }
 
   // Init all API routes recursively
