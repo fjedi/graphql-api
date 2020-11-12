@@ -54,7 +54,12 @@ import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
 // Multi-lang support
-import i18next, { TFunction, i18n, InitOptions as I18NextInitOptions } from 'i18next';
+import i18next, {
+  TFunction,
+  i18n,
+  InitOptions as I18NextInitOptions,
+  Resource as I18NextResource,
+} from 'i18next';
 // @ts-ignore
 import i18nextBackend from 'i18next-sync-fs-backend';
 //
@@ -127,8 +132,10 @@ export type Route<TAppContext, TDatabaseModels extends DatabaseModels> = {
   handlers: RouteHandler<TAppContext, TDatabaseModels>[];
 };
 
+export type Translations = I18NextResource;
+
 export type MultiLangOptions = I18NextInitOptions & {
-  translations: { [k: string]: JSON };
+  translations: Translations;
   backend: { addPath: string; loadPath: string };
   fallbackLng: string;
 };
