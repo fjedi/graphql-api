@@ -612,7 +612,7 @@ export class Server<
     // and server.add*X*Route method
     this.routes.forEach((route) => {
       // @ts-ignore
-      this.router[route.method](`${this.graphqlOptions.url}${route.route}`, ...route.handlers);
+      this.router[route.method](`${this.graphqlOptions.path}${route.route}`, ...route.handlers);
     });
 
     // We'll also add a generic error handler, that prints out to the stdout.
