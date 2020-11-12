@@ -54,7 +54,7 @@ import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
 // Multi-lang support
-import i18next, { TFunction, i18n } from 'i18next';
+import i18next, { TFunction, i18n, InitOptions as I18NextInitOptions } from 'i18next';
 // @ts-ignore
 import i18nextBackend from 'i18next-sync-fs-backend';
 //
@@ -89,7 +89,7 @@ export type ContextState = DefaultState & {
   countryCode?: string;
   userAgent?: string;
   authToken?: string;
-  decodedAuthToken?: { [k: string]: unknown };
+  decodedAuthToken?: { sub: string; [k: string]: unknown };
 };
 
 export type RouteContext<
@@ -127,11 +127,10 @@ export type Route<TAppContext, TDatabaseModels extends DatabaseModels> = {
   handlers: RouteHandler<TAppContext, TDatabaseModels>[];
 };
 
-export type MultiLangOptions = {
-  loadPath: string;
-  addPath: string;
+export type MultiLangOptions = I18NextInitOptions & {
+  translations: { [k: string]: JSON };
+  backend: { addPath: string; loadPath: string };
   fallbackLng: string;
-  translations: JSON[];
 };
 
 export type ServerParams<
@@ -145,7 +144,6 @@ export type ServerParams<
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
   multiLangOptions?: MultiLangOptions;
-  translations?: JSON[];
   contextHelpers?: ContextHelpers;
 };
 
@@ -249,31 +247,29 @@ export class Server<
     }
     if (multiLangOptions?.translations) {
       this.multiLangOptions = multiLangOptions;
-      const { loadPath, addPath, fallbackLng, translations } = multiLangOptions;
-      Object.keys(
-        pick(multiLangOptions, ['loadPath', 'addPath', 'fallbackLng', 'translations']),
-      ).forEach((option) => {
-        const opt = option as keyof MultiLangOptions;
-        if (!multiLangOptions[opt]) {
-          throw new DefaultError(`"${opt}" is a required option to init multi-lang support`, {
-            meta: multiLangOptions,
-          });
-        }
-      });
+      const { backend, fallbackLng, translations } = multiLangOptions;
+      ['backend.loadPath', 'backend.addPath', 'fallbackLng', 'translations'].forEach(
+        (optionKey) => {
+          const optionValue = get(multiLangOptions, optionKey);
+          if (!optionValue) {
+            const e = `"${optionKey}" is a required option to init multi-lang support`;
+            throw new DefaultError(e, {
+              meta: multiLangOptions,
+            });
+          }
+        },
+      );
+      //
+      const { loadPath, addPath } = multiLangOptions.backend;
       // Init multi-lang support
       i18next.use(i18nextBackend).init({
         // debug: true,
         // This is necessary for this sync version
         // of the backend to work:
         initImmediate: false,
-        backend: {
-          // translation resources
-          loadPath: `${loadPath}/{{lng}}.json`,
-          addPath: `${addPath}/{{lng}}.missing.json`,
-        },
+
         // preload: ['zh', 'en', 'ru', 'es'], // must know what languages to use
         preload: Object.keys(translations), // must know what languages to use
-        fallbackLng,
         load: 'languageOnly', // we only provide en, de -> no region specific locals like en-US, de-DE
 
         detection: {
@@ -287,6 +283,13 @@ export class Server<
 
           // cache user language on
           caches: ['cookie'],
+        },
+        ...multiLangOptions,
+        backend: {
+          ...backend,
+          // translation resources
+          loadPath: `${loadPath}/{{lng}}.json`,
+          addPath: `${addPath}/{{lng}}.missing.json`,
         },
       });
     }
