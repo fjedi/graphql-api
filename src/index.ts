@@ -113,8 +113,8 @@ export type RouteContext<
 > = ParameterizedContext<ContextState, DefaultContext> & {
   db: DatabaseConnection<TDatabaseModels>;
   redis: RedisClient;
-  t: TFunction;
-  i18next: i18n;
+  t?: TFunction;
+  i18next?: i18n;
   language: string;
   logger: Logger;
   sentry: typeof Sentry;
@@ -507,12 +507,12 @@ export class Server<
 
   static formatError(
     graphQLError: ApolloError,
-    context: RouteContext<TodoAny, TodoAny>,
+    context: RouteContext<DefaultContext, DefaultState>,
   ): ApolloError {
     const {
       extensions: { exception, code },
     } = graphQLError;
-    const { t: translate } = context;
+    const { t: translate = (message: string) => message } = context;
 
     if (
       !['SequelizeValidationError', 'ValidationError'].includes(get(exception, 'name')) &&
@@ -524,7 +524,7 @@ export class Server<
         logger.error('formatError', graphQLError);
       }
       //
-      const message = context.i18next.exists(graphQLError.message)
+      const message = context.i18next?.exists(graphQLError.message)
         ? graphQLError.message
         : 'The request failed, please try again later or contact technical support';
 
@@ -535,7 +535,7 @@ export class Server<
     //
     const message = `Errors.${graphQLError.message}`;
     return Object.assign(graphQLError, {
-      message: i18next.exists(message) ? translate(message) : graphQLError.message,
+      message: i18next?.exists(message) ? translate(message) : graphQLError.message,
     });
   }
 
