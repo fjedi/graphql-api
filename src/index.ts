@@ -238,9 +238,6 @@ export class Server<
   wsEventEmitter?: initWSEventEmitter.SocketIOEmitter;
   wsServerOptions?: Partial<WSServerOptions>;
 
-  //
-  koaHelmetOptions: { [k: string]: TodoAny };
-
   constructor(params: ServerParams<TAppContext, TDatabaseModels>) {
     const {
       dbOptions,
@@ -254,12 +251,12 @@ export class Server<
     } = params;
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
-    if (bodyParserOptions) {
-      this.bodyParserOptions = bodyParserOptions;
-    }
-    if (corsOptions) {
-      this.corsOptions = corsOptions;
-    }
+    this.bodyParserOptions = merge(
+      { jsonLimit: '50mb', textLimit: '10mb' },
+      bodyParserOptions || {},
+    );
+    this.corsOptions = merge({ cors: true }, corsOptions || {});
+    //
     if (wsServerOptions) {
       this.wsServerOptions = wsServerOptions;
     }
@@ -353,15 +350,6 @@ export class Server<
     this.beforeMiddleware = new Set();
     this.middleware = new Set();
     this.routeParams = new Set();
-
-    //
-    this.koaHelmetOptions = {};
-
-    // Enable body parsing by default.
-    this.bodyParserOptions = {};
-
-    // CORS options for `koa-cors`
-    this.corsOptions = {};
 
     // Build the router, based on our app's settings.  This will define which
     // Koa route handlers
@@ -593,7 +581,7 @@ export class Server<
     this.koaApp.proxy = true;
 
     // Middleware to add preliminary security for HTTP headers via Koa Helmet
-    this.koaApp.use(koaHelmet(this.koaHelmetOptions));
+    this.koaApp.use(koaHelmet());
 
     // Attach custom middleware
     this.middleware.forEach((middlewareFunc) => this.koaApp.use(middlewareFunc));
@@ -816,12 +804,6 @@ export class Server<
     this.koaAppFunc = func;
   }
 
-  setKoaHelmetOptions(opt: TodoAny): void {
-    if (opt) {
-      this.koaHelmetOptions = opt;
-    }
-  }
-
   // 404 handler for the server.  By default, `kit/entry/server.js` will
   // simply return a 404 status code without modifying the HTML render.  By
   // setting a handler here, this will be returned instead
@@ -900,11 +882,6 @@ export class Server<
   // Adds custom DELETE route
   addDeleteRoute(route: string, ...handlers: RouteHandler<TAppContext, TDatabaseModels>[]): void {
     this.addRoute('delete', route, ...handlers);
-  }
-
-  // CORS options, for `koa-cors` instantiation
-  setCORSOptions(opt: CORSOptions): void {
-    this.corsOptions = opt;
   }
 }
 
