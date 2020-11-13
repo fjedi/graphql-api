@@ -172,7 +172,7 @@ export type GraphQLServerOptions<
   resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
   permissions?: {
     rules: PermissionRules;
-    options?: PermissionRulesOptions;
+    options?: Partial<PermissionRulesOptions>;
   };
 };
 
