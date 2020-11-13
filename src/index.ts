@@ -543,14 +543,16 @@ export class Server<
     sync?: boolean;
     models: TDatabaseModels;
     migrationsPath?: string;
+    tableNamePrefix?: string;
   }): Promise<void> {
-    const { sync, models, migrationsPath } = p;
-    //
+    const { sync, models, migrationsPath, tableNamePrefix } = p;
+
     // @ts-ignore
     this.db = await initDatabase<DatabaseModels>(this.dbConnection, {
       sync: sync || false,
       models,
       migrationsPath,
+      tableNamePrefix,
     });
   }
 
