@@ -540,7 +540,7 @@ export class Server<
     });
   }
 
-  async bindModelsToDBConnection(p: InitDatabaseOptions): Promise<void> {
+  async bindModelsToDBConnection(p: InitDatabaseOptions<TDatabaseModels>): Promise<void> {
     // @ts-ignore
     this.db = await initDatabase<DatabaseModels>(this.dbConnection, p);
   }
