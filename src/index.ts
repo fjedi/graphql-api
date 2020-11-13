@@ -25,6 +25,7 @@ import { applyMiddleware } from 'graphql-middleware';
 import {
   createConnection,
   initDatabase,
+  InitDatabaseOptions,
   DatabaseConnection,
   DatabaseConnectionOptions,
   DatabaseModels,
@@ -539,21 +540,9 @@ export class Server<
     });
   }
 
-  async bindModelsToDBConnection(p: {
-    sync?: boolean;
-    models: TDatabaseModels;
-    migrationsPath?: string;
-    tableNamePrefix?: string;
-  }): Promise<void> {
-    const { sync, models, migrationsPath, tableNamePrefix } = p;
-
+  async bindModelsToDBConnection(p: InitDatabaseOptions): Promise<void> {
     // @ts-ignore
-    this.db = await initDatabase<DatabaseModels>(this.dbConnection, {
-      sync: sync || false,
-      models,
-      migrationsPath,
-      tableNamePrefix,
-    });
+    this.db = await initDatabase<DatabaseModels>(this.dbConnection, p);
   }
 
   /* GRAPHQL */
