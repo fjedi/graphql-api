@@ -94,6 +94,7 @@ export type RouteMethod = 'get' | 'post' | 'delete' | 'update' | 'put' | 'patch'
 export type { Middleware, Next, ParameterizedContext, DefaultContext, DefaultState } from 'koa';
 //
 export * as shield from 'graphql-shield';
+export * from './functions';
 
 // @ts-ignore
 type TodoAny = any;

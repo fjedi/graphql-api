@@ -6,7 +6,7 @@ export function timeout(ms: number): Promise<NodeJS.Timeout> {
 
 //
 const ValidIdTypes = ['string', 'number'];
-export function compareIds(id1: any, id2: any): boolean {
+export function compareIds(id1: unknown, id2: unknown): boolean {
   //
   if (!ValidIdTypes.includes(typeof id1) || !ValidIdTypes.includes(typeof id2)) {
     return false;
@@ -14,8 +14,10 @@ export function compareIds(id1: any, id2: any): boolean {
   return `${id1}` === `${id2}`;
 }
 
-export function removeUndefinedValues(values: { [key: string]: any }) {
-  const res: { [key: string]: any } = {};
+export function removeUndefinedValues(values: {
+  [key: string]: unknown;
+}): { [key: string]: unknown } {
+  const res: { [key: string]: unknown } = {};
   Object.keys(values).forEach((key) => {
     if (typeof values[key] !== 'undefined') {
       res[key] = values[key];
@@ -24,16 +26,17 @@ export function removeUndefinedValues(values: { [key: string]: any }) {
   return res;
 }
 
+export type ObjectType = 'Object' | 'Null' | 'RegExp';
 // Returns specific type of any Object
 // getRawType(null)  // returns "Null"
 // getRawType(/sdfsd/)  // returns "RegExp"
-export function getRawType(value: any) {
+export function getRawType(value: unknown): ObjectType {
   // eslint-disable-next-line no-underscore-dangle
   const dtoString = Object.prototype.toString;
 
   const str = dtoString.call(value);
 
-  return str.slice(8, -1);
+  return str.slice(8, -1) as ObjectType;
 }
 
 // Wraps class to avoid creation of multiple instances of it

@@ -1,5 +1,5 @@
 process.env.AUTH_JWT_SECRET = '77dg2DVQyDqrWYWFRLSaMJrMHpB9LWCZ';
-import { Server, WSRequest } from '../src';
+import { Server, WSRequest, getRawType, removeUndefinedValues } from '../src';
 //
 const NODE_INSTANCES_NUMBER = parseInt(process.env.NODE_INSTANCES_NUMBER || '', 10) || 1;
 const DB_MAX_CONNECTIONS = parseInt(process.env.DB_MAX_CONNECTIONS || '', 10) || 150;
@@ -11,6 +11,29 @@ describe('Test api server', function () {
     console.log('Emit afterAll test-hook');
     server?.redis?.end(true);
     await server?.pubsub?.close();
+  });
+
+  it('Get valid rawType of object-like variable', async function () {
+    expect(getRawType(null)).toBe('Null');
+    expect(getRawType(/sdfsd/)).toBe('RegExp');
+    expect(getRawType(Server)).toBe('Function');
+    expect(getRawType({ testObjectField: 'test-value' })).toBe('Object');
+    expect(getRawType(() => null)).toBe('Function');
+  });
+
+  it('Remove undefined or null values from object', async function () {
+    expect(
+      removeUndefinedValues({
+        someField: 'test-value',
+        anotherOne: 'test-value-2',
+        undefinedField: undefined,
+        nullField: null,
+        emptyString: '',
+      }),
+    ).toMatchObject({
+      someField: 'test-value',
+      anotherOne: 'test-value-2',
+    });
   });
 
   it('Should create instance of Server', async function () {
