@@ -131,7 +131,7 @@ export type RouteContext<
   i18next?: i18n;
   language: string;
   logger: Logger;
-  sentry: typeof Sentry;
+  sentry?: typeof Sentry;
   helpers: ContextHelpers;
 } & TAppContext;
 
@@ -290,6 +290,21 @@ export class Server<
       contextHelpers,
       sentryOptions,
     } = params;
+    //
+    this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
+    this.host = process.env.HOST || 'localhost';
+    //
+    if (typeof process.env.PORT !== 'undefined') {
+      const { PORT } = process.env;
+      if (!isValidPort(`${PORT}`)) {
+        throw new TypeError(`${PORT} is not a valid port`);
+      }
+      this.port = parseInt(PORT, 10);
+    } else {
+      this.port = 5000;
+    }
+    //
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
     //
@@ -310,9 +325,41 @@ export class Server<
           meta: sentryOptions,
         });
       }
-      this.sentryOptions = sentryOptions;
+      this.sentryOptions = merge(
+        {
+          debug: this.environment !== 'production',
+          // None = 0, // No logs will be generated
+          // Error = 1, // Only SDK internal errors will be logged
+          // Debug = 2, // Information useful for debugging the SDK will be logged
+          // Verbose = 3 // All SDK actions will be logged
+          logLevel: this.environment === 'production' ? 1 : 3,
+          release: git.long(),
+          environment: this.environment,
+          serverName: this.host,
+          sendDefaultPii: true,
+          attachStacktrace: true,
+          maxBreadcrumbs: 5,
+          /*
+            Configures the sample rate as a percentage of events
+            to be sent in the range of 0.0 to 1.0. The default is
+            1.0 which means that 100% of events are sent. If set
+            to 0.1 only 10% of events will be sent. Events are
+            picked randomly.
+          */
+          // sampleRate: 1,
+          // ...
+          integrations: [
+            new Integrations.Dedupe(),
+            new Integrations.Transaction(),
+            new Integrations.ExtraErrorData({
+              depth: 3,
+            }),
+          ],
+        },
+        sentryOptions,
+      );
       //
-      Sentry.init(sentryOptions);
+      Sentry.init(this.sentryOptions);
       //
       Sentry.configureScope((scope) => {
         scope.setTag('git_commit', git.message());
@@ -379,20 +426,6 @@ export class Server<
       },
     });
     this.logger = logger;
-    //
-    this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
-
-    this.host = process.env.HOST || 'localhost';
-    //
-    if (typeof process.env.PORT !== 'undefined') {
-      const { PORT } = process.env;
-      if (!isValidPort(`${PORT}`)) {
-        throw new TypeError(`${PORT} is not a valid port`);
-      }
-      this.port = parseInt(PORT, 10);
-    } else {
-      this.port = 5000;
-    }
 
     // Init all API routes
     this.routes = new Set();
@@ -452,7 +485,7 @@ export class Server<
     // eslint-disable-next-line no-param-reassign
     this.koaApp.context.logger = this.logger;
     // eslint-disable-next-line no-param-reassign
-    this.koaApp.context.sentry = Sentry;
+    this.koaApp.context.sentry = this.sentry;
     //
     this.koaApp.context.helpers = merge(
       {
