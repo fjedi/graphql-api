@@ -197,7 +197,6 @@ export class Server<
   environment: 'production' | 'development';
   host: string;
   port: number;
-  sslPort: number;
   koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
@@ -330,15 +329,6 @@ export class Server<
       this.port = parseInt(PORT, 10);
     } else {
       this.port = 5000;
-    }
-    if (typeof process.env.SSL_PORT !== 'undefined') {
-      const { SSL_PORT } = process.env;
-      if (!isValidPort(`${SSL_PORT}`)) {
-        throw new TypeError(`${SSL_PORT} is not a valid port`);
-      }
-      this.sslPort = parseInt(SSL_PORT, 10);
-    } else {
-      this.sslPort = 5001;
     }
 
     // Init all API routes
