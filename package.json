@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "2.4.3",
+  "version": "2.5.0",
   "description": "NPM package template",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/fjedi/graphql-api#readme",
   "dependencies": {
-    "@fjedi/database-client": "3.2.5",
+    "@fjedi/database-client": "3.3.0",
     "@fjedi/errors": "1.0.0",
     "@fjedi/jwt": "1.0.1",
     "@fjedi/logger": "1.0.2",
