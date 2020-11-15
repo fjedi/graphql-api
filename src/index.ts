@@ -11,6 +11,8 @@ import koaCors, { Options as CORSOptions } from 'kcors';
 import bodyParser from 'koa-bodyparser';
 // HTTP header hardening
 import koaHelmet from 'koa-helmet';
+// Parse userAgent
+import UserAgent from 'useragent';
 // Cookies
 import Cookie from 'cookie';
 // @ts-ignore
@@ -18,10 +20,22 @@ import cookiesMiddleware from 'universal-cookie-koa';
 // High-precision timing, so we can debug response time to serve a request
 // @ts-ignore
 import ms from 'microseconds';
-import { get, pick, flattenDeep, merge } from 'lodash';
+import { get, pick, flattenDeep, merge, compact } from 'lodash';
 //
-import { Sequelize, ValidationError, OptimisticLockError } from 'sequelize';
+import {
+  Sequelize,
+  ValidationError,
+  OptimisticLockError,
+  DatabaseError,
+  UniqueConstraintError,
+} from 'sequelize';
 import { applyMiddleware } from 'graphql-middleware';
+// Sentry
+import * as Sentry from '@sentry/node';
+import * as Integrations from '@sentry/integrations';
+import { sentry as graphQLSentry } from 'graphql-middleware-sentry';
+import git from 'git-rev-sync';
+// Database
 import {
   createConnection,
   initDatabase,
@@ -66,8 +80,6 @@ import i18nextBackend from 'i18next-sync-fs-backend';
 //
 import { uuid } from './helpers/uuid';
 import { logServerStarted } from './helpers/console';
-import { initExceptionHandler } from './helpers/exception-handler';
-import Sentry, { graphQLSentryMiddleware } from './helpers/sentry';
 import time from './helpers/time';
 import BigNumber from './helpers/numbers';
 import * as transliterator from './helpers/transliterator';
@@ -132,6 +144,12 @@ export type ErrorHandler<TAppContext, TDatabaseModels extends DatabaseModels> = 
   ctx: RouteContext<TAppContext, TDatabaseModels>,
 ) => void;
 
+export type ExceptionHandlerProps = {
+  cleanupFn: (exception?: Error) => Promise<void>;
+  exit?: boolean;
+  exitCode?: number;
+};
+
 export type RouteParam = {
   param: string;
   handler: IParamMiddleware;
@@ -151,6 +169,23 @@ export type MultiLangOptions = I18NextInitOptions & {
   fallbackLng: string;
 };
 
+export type SentryOptions = Sentry.NodeOptions;
+export type SentryError =
+  | DefaultError
+  | ValidationError
+  | DatabaseError
+  | UniqueConstraintError
+  | Error;
+
+export type SentryErrorProps = {
+  messagePrefix?: string;
+  request?: Request;
+  response?: Response;
+  path?: string;
+  userId?: string | number;
+  [k: string]: unknown;
+};
+
 export type ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
@@ -162,6 +197,7 @@ export type ServerParams<
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
   multiLangOptions?: MultiLangOptions;
+  sentryOptions?: SentryOptions;
   contextHelpers?: Partial<ContextHelpers>;
 };
 
@@ -221,6 +257,10 @@ export class Server<
   static setContextLang = setContextLang;
   multiLangOptions?: MultiLangOptions;
 
+  // Sentry
+  sentryOptions?: SentryOptions;
+  sentry?: typeof Sentry;
+
   // Database
   dbConnection: Sequelize;
   db?: DatabaseConnection<TDatabaseModels>;
@@ -247,9 +287,11 @@ export class Server<
       routes,
       multiLangOptions,
       contextHelpers,
+      sentryOptions,
     } = params;
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
+    //
     this.bodyParserOptions = merge(
       { jsonLimit: '50mb', textLimit: '10mb' },
       bodyParserOptions || {},
@@ -259,6 +301,26 @@ export class Server<
     if (wsServerOptions) {
       this.wsServerOptions = wsServerOptions;
     }
+    //
+    if (sentryOptions) {
+      if (!sentryOptions.dsn) {
+        const e = `"dsn" is a required option to init Sentry middleware`;
+        throw new DefaultError(e, {
+          meta: sentryOptions,
+        });
+      }
+      this.sentryOptions = sentryOptions;
+      //
+      Sentry.init(sentryOptions);
+      //
+      Sentry.configureScope((scope) => {
+        scope.setTag('git_commit', git.message());
+        scope.setTag('git_branch', git.branch());
+      });
+      //
+      this.sentry = Sentry;
+    }
+    //
     if (multiLangOptions?.translations) {
       this.multiLangOptions = multiLangOptions;
       const { backend, translations } = multiLangOptions;
@@ -402,6 +464,42 @@ export class Server<
     );
   }
 
+  processExitHandler(opts: ExceptionHandlerProps): (e?: Error) => void {
+    const { cleanupFn, exit = false, exitCode = 1 } = opts;
+    //
+    return (e?: Error) => {
+      //
+      if (e) {
+        this.logger?.error(e);
+        //
+        this.sentry?.captureException(e);
+      }
+      if (typeof cleanupFn === 'function') {
+        cleanupFn(e)
+          .catch(this.logger.error)
+          .then(() => {
+            if (!exit) {
+              process.exit(exitCode);
+            }
+          });
+      } else if (!exit) {
+        setTimeout(() => process.exit(exitCode), 3000);
+      }
+    };
+  }
+
+  async initExceptionHandler(opts: ExceptionHandlerProps): Promise<void> {
+    // Catch all exceptions
+    process.on('exit', this.processExitHandler({ exit: true, ...opts }));
+    process.on('SIGINT', this.processExitHandler(opts));
+    process.on('SIGHUP', this.processExitHandler(opts));
+    process.on('SIGTERM', this.processExitHandler(opts));
+    process.on('SIGUSR1', this.processExitHandler(opts));
+    process.on('SIGUSR2', this.processExitHandler(opts));
+    process.on('uncaughtException', this.processExitHandler(opts));
+    process.on('unhandledRejection', this.processExitHandler(opts));
+  }
+
   // Init all API routes recursively
   initRoute(r: TodoAny | TodoAny[]): void {
     if (Array.isArray(r)) {
@@ -527,6 +625,22 @@ export class Server<
   // Enables internal GraphQL server.  Default GraphQL and GraphiQL endpoints
   // can be overridden
   async startServer(): Promise<http.Server> {
+    const httpServer = http.createServer(this.koaApp.callback());
+    //
+    const httpTerminator = createHttpTerminator({
+      server: httpServer,
+    });
+    // Gracefully shutdown our process in case of any uncaught exception
+    await this.initExceptionHandler({
+      async cleanupFn() {
+        //
+        httpTerminator
+          .terminate()
+          .catch(logger.error)
+          .then(() => process.exit(1));
+      },
+    });
+
     /* CUSTOM APP INSTANTIATION */
     // Pass the `app` to do anything we need with it in userland. Useful for
     // custom instantiation that doesn't fit into the middleware/route functions
@@ -599,24 +713,8 @@ export class Server<
       }
     });
 
-    const httpServer = http.createServer(this.koaApp.callback());
-    //
-    const httpTerminator = createHttpTerminator({
-      server: httpServer,
-    });
     // @ts-ignore
     this.wsEventEmitter = initWSEventEmitter(redis);
-
-    // Gracefully shutdown our process
-    await initExceptionHandler({
-      async cleanupFn() {
-        //
-        httpTerminator
-          .terminate()
-          .catch(logger.error)
-          .then(() => process.exit(1));
-      },
-    });
 
     //
     await this.startWSServer(httpServer, this.wsServerOptions);
@@ -642,7 +740,60 @@ export class Server<
       schemaDirectives,
     });
 
-    if (graphQLSentryMiddleware) {
+    //
+    if (this.sentry) {
+      const graphQLSentryMiddleware = graphQLSentry({
+        forwardErrors: true,
+        config: this.sentryOptions,
+        withScope: (
+          scope,
+          error,
+          context: ParameterizedContext<DefaultState, RouteContext<TAppContext, TDatabaseModels>>,
+        ) => {
+          const { viewer } = context.state;
+          //
+          if (viewer) {
+            const { id, email } = viewer;
+            //
+            const ipFromHeaders =
+              typeof get(context, 'get') === 'function'
+                ? context.get('Cf-Connecting-Ip') ||
+                  context.get('X-Forwarded-For') ||
+                  context.get('X-Real-Ip') ||
+                  context.request.ip
+                : undefined;
+            //
+            scope.setUser({
+              id,
+              email: email || undefined,
+              ip_address: ipFromHeaders,
+            });
+          }
+          //
+          scope.setTag('git_commit', git.message());
+          scope.setTag('git_branch', git.branch());
+          if (context?.request?.body) {
+            scope.setExtra('body', context?.request?.body);
+          }
+          //
+          if (context?.request?.headers) {
+            const { origin, 'user-agent': ua } = context?.request?.headers;
+            scope.setExtra('origin', origin);
+            scope.setExtra('user-agent', ua);
+            //
+            const userAgent = ua && UserAgent.parse(ua);
+            if (userAgent) {
+              scope.setTag('os', userAgent && userAgent.os.toString());
+              scope.setTag('device', userAgent && userAgent.device.toString());
+              scope.setTag('browser', userAgent && userAgent.toAgent());
+            }
+          }
+          //
+          if (context?.request?.url) {
+            scope.setTag('url', context.request.url);
+          }
+        },
+      });
       schema = applyMiddleware(schema, graphQLSentryMiddleware);
     }
     //
@@ -872,6 +1023,100 @@ export class Server<
   // Adds custom DELETE route
   addDeleteRoute(route: string, ...handlers: RouteHandler<TAppContext, TDatabaseModels>[]): void {
     this.addRoute('delete', route, ...handlers);
+  }
+
+  async sendErrorToSentry(error: SentryError, args: SentryErrorProps): Promise<void> {
+    if (!this.sentry) {
+      const e =
+        'Sentry instance has not been initialized. Failed to send error to the Sentry cloud';
+      this.logger.error(e);
+      this.logger.error(error);
+      return;
+    }
+    // @ts-ignore
+    let meta: any = error.data || {};
+    //
+    if (error instanceof DefaultError && error.originalError instanceof DefaultError) {
+      meta = { ...error.originalError.data, ...meta };
+    }
+    // Converting string error to Error instance
+    if (
+      error instanceof ValidationError ||
+      error instanceof DatabaseError ||
+      error instanceof UniqueConstraintError
+    ) {
+      // If we've got a Sequelize validationError,
+      // than we should get the first error from array of errors
+      // eslint-disable-next-line prefer-destructuring
+      meta.instance = pick(get(error, 'errors[0].instance', {}), [
+        'dataValues',
+        '_changed',
+        '_previousDataValues',
+      ]);
+      meta.origin = get(error, 'errors[0].origin');
+    }
+    //
+    const { request } = args;
+    let { messagePrefix = '' } = args;
+    const messagePrefixChunks = [];
+    //
+    const method =
+      // get http-request-method from koa request
+      get(request, 'method') ||
+      // get it from request config
+      meta.method;
+    if (method) {
+      messagePrefixChunks.push(method);
+    }
+    //
+    const path =
+      // get path from koa request
+      get(request, 'path') ||
+      // get method/path from request config (for example, bitcoin-request's params.method)
+      get(meta, 'url');
+    if (path) {
+      messagePrefixChunks.push(path);
+    }
+    if (messagePrefixChunks.length > 0) {
+      //
+      messagePrefix = `${messagePrefix}[${compact(messagePrefixChunks).join(' ')}] `;
+    }
+    // Try to get meta data from the args if error has been emitted not from koa web-server (doesn't have any context.request)
+    if (!request) {
+      Object.keys(args).forEach((argKey) => {
+        // @ts-ignore
+        const v = args[argKey];
+        if (messagePrefix === v) {
+          return;
+        }
+        if (typeof v !== 'string' && typeof v !== 'number') {
+          return;
+        }
+        meta[argKey] = v;
+      });
+    }
+    //
+    this.sentry.withScope((scope) => {
+      if (request) {
+        scope.addEventProcessor((event) => Sentry.Handlers.parseRequest(event, request));
+      }
+      //
+      const exception = typeof error === 'string' ? new Error(error) : error;
+      exception.message = `${messagePrefix}${exception.message}`;
+      // @ts-ignore
+      exception.data = meta;
+      // Group errors together based on their message
+      const fingerprint = ['{{ default }}'];
+      if (messagePrefix) {
+        fingerprint.push(messagePrefix);
+      }
+      if (exception.message) {
+        fingerprint.push(exception.message);
+      }
+      scope.setFingerprint(fingerprint);
+      //
+      Sentry.captureException(exception);
+    });
   }
 }
 
