@@ -26,7 +26,7 @@ export function removeUndefinedValues(values: {
   return res;
 }
 
-export type ObjectType = 'Object' | 'Null' | 'RegExp';
+export type ObjectType = 'Object' | 'Null' | 'RegExp' | 'Function';
 // Returns specific type of any Object
 // getRawType(null)  // returns "Null"
 // getRawType(/sdfsd/)  // returns "RegExp"
