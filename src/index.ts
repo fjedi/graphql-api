@@ -565,8 +565,8 @@ export class Server<
         //
         ctx.i18next = i18nextInstance;
         // Saving language to the current koaContext
-        const lng = detectContextLang(ctx, Server.LANG_DETECTION_DEFAULT_OPTIONS);
-        await i18nextInstance.changeLanguage(lng || fallbackLng);
+        const lng = detectContextLang(ctx, Server.LANG_DETECTION_DEFAULT_OPTIONS) || fallbackLng;
+        await i18nextInstance.changeLanguage(lng);
         Server.setContextLang(ctx, lng, Server.LANG_DETECTION_DEFAULT_OPTIONS);
         //
         ctx.t = function translate(...args: any) {
