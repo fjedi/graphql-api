@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "NPM package template",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -91,7 +91,7 @@
     "graphql-shield": "7.4.0",
     "http": "0.0.1-security",
     "http-terminator": "2.0.3",
-    "i18next": "19.8.3",
+    "i18next": "19.8.4",
     "i18next-sync-fs-backend": "1.1.1",
     "invariant": "2.2.4",
     "ip": "1.1.5",
