@@ -50,6 +50,7 @@ import { logger, Logger } from '@fjedi/logger';
 import { decodeJWT } from '@fjedi/jwt';
 // Socket.io
 import { Socket, Server as WebsocketServer, ServerOptions } from 'socket.io';
+import { SocketId } from 'socket.io-adapter';
 import { createAdapter } from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
@@ -225,7 +226,17 @@ export type WSRequest = {
 
 export type WSAuthCallback = (error: DefaultError | undefined, isAuthorized: boolean) => void;
 
-export type WSSocket = Socket;
+export type WSSocketClient = Socket['client'] & {
+  id: SocketId;
+  request: Socket['client']['request'] & {
+    clientRole?: string;
+    client: DatabaseModels[keyof DatabaseModels];
+  };
+};
+
+export type WSSocket = Socket & {
+  client: WSSocketClient;
+};
 export type WSServerOptions = ServerOptions;
 
 export class Server<
