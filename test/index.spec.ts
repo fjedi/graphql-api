@@ -38,6 +38,7 @@ describe('Test api server', function () {
 
   it('Should create instance of Server', async function () {
     server = new Server({
+      allowedOrigins: ['example.com'],
       // Set-up CORS to allow credentials to be passed to origins outside of the
       // server.  We'll need this in order to test this out in development on :8080
       // *  - {String|Function(ctx)} origin `Access-Control-Allow-Origin`, default is request Origin header
