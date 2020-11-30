@@ -303,6 +303,13 @@ export class Server<
       sentryOptions,
     } = params;
     //
+    if (!Array.isArray(origins) || origins.length === 0) {
+      const e = `"origins" is a required option`;
+      throw new DefaultError(e, {
+        meta: sentryOptions,
+      });
+    }
+    //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
     this.host = process.env.HOST || 'localhost';
