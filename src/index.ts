@@ -282,7 +282,10 @@ export class Server<
   pubsub: RedisPubSub;
 
   // Graphql-related staff
-  graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
+  graphqlOptions?: GraphQLServerOptions<TAppContext, TDatabaseModels>;
+
+  //
+  httpServer?: http.Server;
 
   // Websockets
   ws?: WebsocketServer;
@@ -326,7 +329,9 @@ export class Server<
     }
     //
     this.dbConnection = createConnection(dbOptions);
-    this.graphqlOptions = graphqlOptions;
+    if (graphqlOptions) {
+      this.graphqlOptions = graphqlOptions;
+    }
     //
     this.bodyParserOptions = merge(
       { jsonLimit: '50mb', textLimit: '10mb' },
@@ -749,7 +754,10 @@ export class Server<
     // and server.add*X*Route method
     this.routes.forEach((route) => {
       // @ts-ignore
-      this.router[route.method](`${this.graphqlOptions.path}${route.route}`, ...route.handlers);
+      this.router[route.method](
+        `${this.graphqlOptions?.path || '/api'}${route.route}`,
+        ...route.handlers,
+      );
     });
 
     // We'll also add a generic error handler, that prints out to the stdout.
@@ -777,168 +785,170 @@ export class Server<
     this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
 
     // GraphQL Server
-    const {
-      typeDefs,
-      resolvers,
-      permissions,
-      subscriptions,
-      playground,
-      schemaDirectives,
-    } = this.graphqlOptions;
-    if (!typeDefs) {
-      throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
-    }
-    let schema = makeExecutableSchema({
-      typeDefs,
-      resolvers: resolvers(this),
-      schemaDirectives,
-    });
-
-    //
-    if (this.sentry) {
-      const graphQLSentryMiddleware = graphQLSentry({
-        forwardErrors: true,
-        config: this.sentryOptions,
-        withScope: (
-          scope,
-          error,
-          context: ParameterizedContext<DefaultState, RouteContext<TAppContext, TDatabaseModels>>,
-        ) => {
-          const { viewer } = context.state;
-          //
-          if (viewer) {
-            const { id, email } = viewer;
-            //
-            const ipFromHeaders =
-              typeof get(context, 'get') === 'function'
-                ? context.get('Cf-Connecting-Ip') ||
-                  context.get('X-Forwarded-For') ||
-                  context.get('X-Real-Ip') ||
-                  context.request.ip
-                : undefined;
-            //
-            scope.setUser({
-              id,
-              email: email || undefined,
-              ip_address: ipFromHeaders,
-            });
-          }
-          //
-          scope.setTag('git_commit', git.message());
-          scope.setTag('git_branch', git.branch());
-          if (context?.request?.body) {
-            scope.setExtra('body', context?.request?.body);
-          }
-          //
-          if (context?.request?.headers) {
-            const { origin, 'user-agent': ua } = context?.request?.headers;
-            scope.setExtra('origin', origin);
-            scope.setExtra('user-agent', ua);
-            //
-            const userAgent = ua && UserAgent.parse(ua);
-            if (userAgent) {
-              scope.setTag('os', userAgent && userAgent.os.toString());
-              scope.setTag('device', userAgent && userAgent.device.toString());
-              scope.setTag('browser', userAgent && userAgent.toAgent());
-            }
-          }
-          //
-          if (context?.request?.url) {
-            scope.setTag('url', context.request.url);
-          }
-        },
+    if (this.graphqlOptions) {
+      const {
+        typeDefs,
+        resolvers,
+        permissions,
+        subscriptions,
+        playground,
+        schemaDirectives,
+      } = this.graphqlOptions;
+      if (!typeDefs) {
+        throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
+      }
+      let schema = makeExecutableSchema({
+        typeDefs,
+        resolvers: resolvers(this),
+        schemaDirectives,
       });
-      schema = applyMiddleware(schema, graphQLSentryMiddleware);
-    }
-    //
-    if (permissions?.rules) {
-      const { rules } = permissions;
-      const options = merge(
-        {
-          debug: process.env.NODE_ENV === 'development',
-          allowExternalErrors: true,
-          fallbackRule: allow,
-          fallbackError: new DefaultError('Access is denied', {
-            status: 403,
-          }),
-        },
-        permissions.options,
-      );
-      schema = applyMiddleware(schema, shield(rules, options));
-    }
-    // Attach the GraphQL schema to the server, and hook it up to the endpoint
-    // to listen to POST requests
-    const engineOptions = {
-      apiKey: process.env.APOLLO_KEY || undefined,
-      graphVariant: process.env.NODE_ENV || undefined,
+
       //
-      // experimental_schemaReporting: true,
-    };
-    const apolloServer = new ApolloServer({
-      // Attach the GraphQL schema
-      schema,
-      playground,
-      debug: process.env.NODE_ENV !== 'production',
-      tracing: process.env.NODE_ENV !== 'production',
-      logger: this.logger,
-      introspection: true,
-      engine: engineOptions,
-      subscriptions,
-      extensions: [
-        () => new PossibleTypesExtension(),
-        () => new FormatErrorWithContextExtension(Server.formatError),
-      ],
-      plugins: [
-        ResponseCachePlugin({
-          sessionId: (requestContext) => {
-            // @ts-ignore
-            let authToken = requestContext.request.http.headers.get('authorization');
-            if (!authToken) {
-              // @ts-ignore
-              const cookies = requestContext.request.http.headers.get('cookie');
-              if (cookies) {
-                authToken = get(Cookie.parse(cookies), 'token');
+      if (this.sentry) {
+        const graphQLSentryMiddleware = graphQLSentry({
+          forwardErrors: true,
+          config: this.sentryOptions,
+          withScope: (
+            scope,
+            error,
+            context: ParameterizedContext<DefaultState, RouteContext<TAppContext, TDatabaseModels>>,
+          ) => {
+            const { viewer } = context.state;
+            //
+            if (viewer) {
+              const { id, email } = viewer;
+              //
+              const ipFromHeaders =
+                typeof get(context, 'get') === 'function'
+                  ? context.get('Cf-Connecting-Ip') ||
+                    context.get('X-Forwarded-For') ||
+                    context.get('X-Real-Ip') ||
+                    context.request.ip
+                  : undefined;
+              //
+              scope.setUser({
+                id,
+                email: email || undefined,
+                ip_address: ipFromHeaders,
+              });
+            }
+            //
+            scope.setTag('git_commit', git.message());
+            scope.setTag('git_branch', git.branch());
+            if (context?.request?.body) {
+              scope.setExtra('body', context?.request?.body);
+            }
+            //
+            if (context?.request?.headers) {
+              const { origin, 'user-agent': ua } = context?.request?.headers;
+              scope.setExtra('origin', origin);
+              scope.setExtra('user-agent', ua);
+              //
+              const userAgent = ua && UserAgent.parse(ua);
+              if (userAgent) {
+                scope.setTag('os', userAgent && userAgent.os.toString());
+                scope.setTag('device', userAgent && userAgent.device.toString());
+                scope.setTag('browser', userAgent && userAgent.toAgent());
               }
             }
-            // @ts-ignore
-            const sessionId = authToken ? this.db?.models.User.getIdFromToken(authToken) : null;
             //
-            return sessionId;
+            if (context?.request?.url) {
+              scope.setTag('url', context.request.url);
+            }
           },
-        }),
-      ],
-      // Bind the current request context, so it's accessible within GraphQL
-      context: ({ ctx, connection }) => {
-        //
-        const context = get(connection, 'context', ctx);
-        context.db = this.db;
-        context.helpers = this.koaApp.context.helpers;
-        // Create facebook dataloader context for better performance
-        // @ts-ignore
-        // eslint-disable-next-line no-param-reassign
-        context.state.dataloaderContext = this.db?.helpers.createDatabaseContext();
-        //
-        return context;
-      },
-      persistedQueries: {
-        cache: new RedisCache(pick(redis.options, ['host', 'port'])),
-      },
-      cache: new RedisCache(pick(redis.options, ['host', 'port'])),
-      cacheControl: {
-        defaultMaxAge: 0,
-      },
-    });
-    apolloServer.applyMiddleware({
-      app: this.koaApp,
-      // server: apolloServer,
-      path: this.graphqlOptions.path,
+        });
+        schema = applyMiddleware(schema, graphQLSentryMiddleware);
+      }
       //
-      bodyParserConfig: this.bodyParserOptions,
-      cors: this.corsOptions,
-    });
-    // Add subscription support
-    if (subscriptions) {
-      apolloServer.installSubscriptionHandlers(httpServer);
+      if (permissions?.rules) {
+        const { rules } = permissions;
+        const options = merge(
+          {
+            debug: process.env.NODE_ENV === 'development',
+            allowExternalErrors: true,
+            fallbackRule: allow,
+            fallbackError: new DefaultError('Access is denied', {
+              status: 403,
+            }),
+          },
+          permissions.options,
+        );
+        schema = applyMiddleware(schema, shield(rules, options));
+      }
+      // Attach the GraphQL schema to the server, and hook it up to the endpoint
+      // to listen to POST requests
+      const engineOptions = {
+        apiKey: process.env.APOLLO_KEY || undefined,
+        graphVariant: process.env.NODE_ENV || undefined,
+        //
+        // experimental_schemaReporting: true,
+      };
+      const apolloServer = new ApolloServer({
+        // Attach the GraphQL schema
+        schema,
+        playground,
+        debug: process.env.NODE_ENV !== 'production',
+        tracing: process.env.NODE_ENV !== 'production',
+        logger: this.logger,
+        introspection: true,
+        engine: engineOptions,
+        subscriptions,
+        extensions: [
+          () => new PossibleTypesExtension(),
+          () => new FormatErrorWithContextExtension(Server.formatError),
+        ],
+        plugins: [
+          ResponseCachePlugin({
+            sessionId: (requestContext) => {
+              // @ts-ignore
+              let authToken = requestContext.request.http.headers.get('authorization');
+              if (!authToken) {
+                // @ts-ignore
+                const cookies = requestContext.request.http.headers.get('cookie');
+                if (cookies) {
+                  authToken = get(Cookie.parse(cookies), 'token');
+                }
+              }
+              // @ts-ignore
+              const sessionId = authToken ? this.db?.models.User.getIdFromToken(authToken) : null;
+              //
+              return sessionId;
+            },
+          }),
+        ],
+        // Bind the current request context, so it's accessible within GraphQL
+        context: ({ ctx, connection }) => {
+          //
+          const context = get(connection, 'context', ctx);
+          context.db = this.db;
+          context.helpers = this.koaApp.context.helpers;
+          // Create facebook dataloader context for better performance
+          // @ts-ignore
+          // eslint-disable-next-line no-param-reassign
+          context.state.dataloaderContext = this.db?.helpers.createDatabaseContext();
+          //
+          return context;
+        },
+        persistedQueries: {
+          cache: new RedisCache(pick(redis.options, ['host', 'port'])),
+        },
+        cache: new RedisCache(pick(redis.options, ['host', 'port'])),
+        cacheControl: {
+          defaultMaxAge: 0,
+        },
+      });
+      apolloServer.applyMiddleware({
+        app: this.koaApp,
+        // server: apolloServer,
+        path: this.graphqlOptions.path,
+        //
+        bodyParserConfig: this.bodyParserOptions,
+        cors: this.corsOptions,
+      });
+      // Add subscription support
+      if (subscriptions) {
+        apolloServer.installSubscriptionHandlers(httpServer);
+      }
     }
 
     //
@@ -949,17 +959,27 @@ export class Server<
       type: 'server',
     });
 
+    //
+    this.httpServer = httpServer;
+
     return httpServer;
   }
 
   async startWSServer(
-    httpServer: http.Server,
+    httpServerOrPort: number | http.Server,
     o?: Partial<WSServerOptions>,
   ): Promise<WebsocketServer> {
     const { adapter, path, wsEngine, ...opts } = o || {};
+    if (this.graphqlOptions) {
+      if (httpServerOrPort === this.httpServer || this.port === httpServerOrPort) {
+        const e = `To avoid conflicts with graphQL's subscriptions, please provide different http instance for socket.io WS-server or set port-number that differs from httpServer's "port" value instead to start standalone WS-server`;
+        throw new Error(e);
+      }
+    }
     //
     const ws = new WebsocketServer(
-      httpServer,
+      // @ts-ignore
+      httpServerOrPort,
       merge(
         {
           cors: {
