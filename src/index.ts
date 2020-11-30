@@ -221,15 +221,14 @@ export type WSRequest = Socket['request'] & {
     authorization?: string;
     ['user-agent']?: string;
   };
+  clientRole?: string;
+  client?: DatabaseModels[keyof DatabaseModels];
 };
 
 export type WSAuthCallback = (error: DefaultError | undefined, isAuthorized: boolean) => void;
 
 export type WSSocketClient = Socket['client'] & {
-  request: WSRequest & {
-    clientRole?: string;
-    client?: DatabaseModels[keyof DatabaseModels];
-  };
+  request: WSRequest;
 };
 export interface WSSocket extends Socket {
   client: WSSocketClient;
