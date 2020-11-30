@@ -215,7 +215,7 @@ export type GraphQLServerOptions<
   };
 };
 
-export type WSRequest = {
+export type WSRequest = Socket['request'] & {
   headers: {
     cookie?: string;
     authorization?: string;
@@ -226,13 +226,14 @@ export type WSRequest = {
 export type WSAuthCallback = (error: DefaultError | undefined, isAuthorized: boolean) => void;
 
 export type WSSocketClient = Socket['client'] & {
-  request: Socket['client']['request'] & {
+  request: WSRequest & {
     clientRole?: string;
     client?: DatabaseModels[keyof DatabaseModels];
   };
 };
 export interface WSSocket extends Socket {
   client: WSSocketClient;
+  request: WSRequest;
 }
 
 export type WSServerOptions = ServerOptions;
