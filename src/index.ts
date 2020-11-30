@@ -227,16 +227,15 @@ export type WSRequest = {
 export type WSAuthCallback = (error: DefaultError | undefined, isAuthorized: boolean) => void;
 
 export type WSSocketClient = Socket['client'] & {
-  id: SocketId;
   request: Socket['client']['request'] & {
     clientRole?: string;
-    client: DatabaseModels[keyof DatabaseModels];
+    client?: DatabaseModels[keyof DatabaseModels];
   };
 };
-
-export type WSSocket = Socket & {
+export interface WSSocket extends Socket {
   client: WSSocketClient;
-};
+}
+
 export type WSServerOptions = ServerOptions;
 
 export class Server<
