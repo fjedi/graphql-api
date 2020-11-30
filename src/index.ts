@@ -191,7 +191,7 @@ export type ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = {
-  origins: string[];
+  allowedOrigins: string[];
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
@@ -244,7 +244,7 @@ export class Server<
   environment: 'production' | 'development';
   host: string;
   port: number;
-  origins: string[];
+  allowedOrigins: string[];
   koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
@@ -291,7 +291,7 @@ export class Server<
 
   constructor(params: ServerParams<TAppContext, TDatabaseModels>) {
     const {
-      origins,
+      allowedOrigins,
       dbOptions,
       graphqlOptions,
       bodyParserOptions,
@@ -303,13 +303,13 @@ export class Server<
       sentryOptions,
     } = params;
     //
-    if (!Array.isArray(origins) || origins.length === 0) {
+    if (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0) {
       const e = `"origins" is a required option`;
       throw new DefaultError(e, {
         meta: sentryOptions,
       });
     }
-    this.origins = origins;
+    this.allowedOrigins = allowedOrigins;
     //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
@@ -963,7 +963,7 @@ export class Server<
       merge(
         {
           cors: {
-            origin: this.origins,
+            origin: this.allowedOrigins,
             methods: ['GET', 'POST'],
             // allowedHeaders: ['some-custom-header'],
             credentials: true,
