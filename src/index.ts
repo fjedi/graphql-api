@@ -970,7 +970,7 @@ export class Server<
     o?: Partial<WSServerOptions>,
   ): Promise<WebsocketServer> {
     const { adapter, path, wsEngine, ...opts } = o || {};
-    if (this.graphqlOptions) {
+    if (this.graphqlOptions?.subscriptions) {
       if (httpServerOrPort === this.httpServer || this.port === httpServerOrPort) {
         const e = `To avoid conflicts with graphQL's subscriptions, please provide different http instance for socket.io WS-server or set port-number that differs from httpServer's "port" value instead to start standalone WS-server`;
         throw new Error(e);
