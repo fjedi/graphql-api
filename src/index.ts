@@ -309,6 +309,7 @@ export class Server<
         meta: sentryOptions,
       });
     }
+    this.origins = origins;
     //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
@@ -323,7 +324,6 @@ export class Server<
     } else {
       this.port = 5000;
     }
-    this.origins = origins;
     //
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
