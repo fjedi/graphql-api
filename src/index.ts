@@ -50,13 +50,12 @@ import { logger, Logger } from '@fjedi/logger';
 import { decodeJWT } from '@fjedi/jwt';
 // Socket.io
 import { Socket, Server as WebsocketServer, ServerOptions } from 'socket.io';
-import { SocketId } from 'socket.io-adapter';
 import { createAdapter } from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
 //
 import { ApolloServer, ApolloError, Config, makeExecutableSchema } from 'apollo-server-koa';
-import { rule, shield, and, not, or, allow, chain, inputRule } from 'graphql-shield';
+import { shield, allow } from 'graphql-shield';
 import {
   IRules as PermissionRules,
   IOptions as PermissionRulesOptions,
