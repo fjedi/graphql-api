@@ -223,7 +223,7 @@ export type WSRequest = {
   };
 };
 
-export type WSAuthCallback = (error: DefaultError | null, isAuthorized: boolean) => void;
+export type WSAuthCallback = (error: DefaultError | undefined, isAuthorized: boolean) => void;
 
 export type WSSocket = Socket;
 export type WSServerOptions = ServerOptions;
