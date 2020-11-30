@@ -50,7 +50,7 @@ import { logger, Logger } from '@fjedi/logger';
 import { decodeJWT } from '@fjedi/jwt';
 // Socket.io
 import WebsocketHandler, { Socket, Server as WebsocketServer, ServerOptions } from 'socket.io';
-import wsRedis from 'socket.io-redis';
+import { createAdapter } from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
 //
@@ -191,6 +191,7 @@ export type ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = {
+  origins: string[];
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
@@ -234,6 +235,7 @@ export class Server<
   environment: 'production' | 'development';
   host: string;
   port: number;
+  origins: string[];
   koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
@@ -280,6 +282,7 @@ export class Server<
 
   constructor(params: ServerParams<TAppContext, TDatabaseModels>) {
     const {
+      origins,
       dbOptions,
       graphqlOptions,
       bodyParserOptions,
@@ -304,6 +307,7 @@ export class Server<
     } else {
       this.port = 5000;
     }
+    this.origins = origins;
     //
     this.dbConnection = createConnection(dbOptions);
     this.graphqlOptions = graphqlOptions;
@@ -937,13 +941,31 @@ export class Server<
     o?: Partial<WSServerOptions>,
   ): Promise<WebsocketServer> {
     const { adapter, path, wsEngine, ...opts } = o || {};
-    // @ts-ignore
-    const ws = WebsocketHandler(httpServer, {
-      ...opts,
-      path: path || '/socket.io',
-      wsEngine: wsEngine || 'ws',
-      adapter: adapter || wsRedis(redis.options),
-    });
+    //
+    const ws = new WebsocketServer(
+      httpServer,
+      merge(
+        {
+          cors: {
+            origin: this.origins,
+            methods: ['GET', 'POST'],
+            // allowedHeaders: ['some-custom-header'],
+            credentials: true,
+          },
+        },
+        opts,
+        {
+          path: path || '/socket.io',
+          wsEngine: wsEngine || 'ws',
+          adapter:
+            adapter ||
+            createAdapter({
+              pubClient: redis,
+              subClient: redis.duplicate(),
+            }),
+        },
+      ),
+    );
 
     if (!ws) {
       throw new Error('Failed to start websocket-server');
