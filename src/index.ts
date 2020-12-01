@@ -51,7 +51,7 @@ import { logger, Logger } from '@fjedi/logger';
 import { decodeJWT } from '@fjedi/jwt';
 // Socket.io
 import { Socket, Server as WebsocketServer, ServerOptions } from 'socket.io';
-import { createAdapter } from 'socket.io-redis';
+import { createAdapter, RedisAdapter } from 'socket.io-redis';
 import initWSEventEmitter from 'socket.io-emitter';
 
 //
@@ -1041,8 +1041,9 @@ export class Server<
         logger.info(`Failed to join client to the room "${roomId}, ws-server is not running"`);
         return;
       }
-      // @ts-ignore
-      await this.ws.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`);
+      //
+      const adapter = this.ws.of('/').adapter as RedisAdapter;
+      await adapter.remoteJoin(socket.id, `${roomId}`);
     } catch (err) {
       this.logger.error(err);
       this.sentry?.captureException(err);
