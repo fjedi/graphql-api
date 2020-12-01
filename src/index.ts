@@ -199,7 +199,7 @@ export type ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = {
-  allowedOrigins: string[];
+  allowedOrigins?: string[];
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
@@ -311,7 +311,14 @@ export class Server<
       allowedOrigins,
     } = params;
     //
-    if (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0) {
+    if (allowedOrigins && (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0)) {
+      const e = `Invalid "allowedOrigins" array`;
+      throw new DefaultError(e, {
+        meta: { corsOptions, allowedOrigins },
+      });
+    }
+    //
+    if (!allowedOrigins) {
       this.allowedOrigins = ['*'];
     } else {
       this.allowedOrigins = allowedOrigins;
