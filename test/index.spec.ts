@@ -118,12 +118,6 @@ describe('Test api server', function () {
         password: process.env.DB_PASSWORD || undefined,
         timezone: '+00:00',
       },
-      wsServerOptions: {
-        path: '/socket.io',
-        // origins: '*',
-        // origins: '*:*',
-        wsEngine: 'ws',
-      },
     });
 
     expect(server).toBeInstanceOf(Server);
