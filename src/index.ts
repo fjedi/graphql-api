@@ -349,13 +349,13 @@ export class Server<
     );
     //
     this.corsOptions = merge({ credentials: true }, corsOptions, {
-      origin: allowedOrigins.join(','),
+      origin: this.allowedOrigins.join(','),
     });
     //
-    if (this.corsOptions.credentials && allowedOrigins.includes('*')) {
+    if (this.corsOptions.credentials && this.allowedOrigins.includes('*')) {
       const e = `if corsOptions.credentials is "true", you must set non-empty "allowedOrigins" list that will not include "*" `;
       throw new DefaultError(e, {
-        meta: { corsOptions, allowedOrigins },
+        meta: { corsOptions: this.corsOptions, allowedOrigins: this.allowedOrigins },
       });
     }
     //
