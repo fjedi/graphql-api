@@ -203,7 +203,6 @@ export type ServerParams<
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
   corsOptions?: KoaCORSOptions;
-  wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
   multiLangOptions?: MultiLangOptions;
   sentryOptions?: SentryOptions;
@@ -297,7 +296,6 @@ export class Server<
   // Websockets
   ws?: WebsocketServer;
   wsEventEmitter?: initWSEventEmitter.SocketIOEmitter;
-  wsServerOptions?: Partial<WSServerOptions>;
 
   constructor(params: ServerParams<TAppContext, TDatabaseModels>) {
     const {
@@ -306,7 +304,6 @@ export class Server<
       graphqlOptions,
       bodyParserOptions,
       corsOptions,
-      wsServerOptions,
       routes,
       multiLangOptions,
       contextHelpers,
@@ -980,7 +977,7 @@ export class Server<
       httpServerOrPort,
       merge(
         {
-          cors: merge({ credentials: true }, corsOptions),
+          cors: merge({ origin: '*', credentials: true }, corsOptions),
         },
         opts,
         {
