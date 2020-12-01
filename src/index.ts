@@ -7,6 +7,7 @@ import Koa, { Middleware, Next, ParameterizedContext, DefaultContext, DefaultSta
 import KoaRouter, { IParamMiddleware } from 'koa-router';
 // Enable cross-origin requests
 import koaCors, { Options as KoaCORSOptions } from 'kcors';
+import { CorsOptions as ExpressCORSOptions } from 'cors';
 //
 import bodyParser from 'koa-bodyparser';
 // HTTP header hardening
@@ -198,6 +199,7 @@ export type ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = {
+  allowedOrigins: string[];
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
@@ -249,6 +251,7 @@ export class Server<
   environment: 'production' | 'development';
   host: string;
   port: number;
+  allowedOrigins: string[];
   koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
@@ -305,7 +308,14 @@ export class Server<
       multiLangOptions,
       contextHelpers,
       sentryOptions,
+      allowedOrigins,
     } = params;
+    //
+    if (!Array.isArray(allowedOrigins) || allowedOrigins.length === 0) {
+      this.allowedOrigins = ['*'];
+    } else {
+      this.allowedOrigins = allowedOrigins;
+    }
     //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
@@ -331,7 +341,16 @@ export class Server<
       bodyParserOptions || {},
     );
     //
-    this.corsOptions = merge({ credentials: true }, corsOptions);
+    this.corsOptions = merge({ credentials: true }, corsOptions, {
+      origin: allowedOrigins.join(','),
+    });
+    //
+    if (this.corsOptions.credentials && allowedOrigins.includes('*')) {
+      const e = `if corsOptions.credentials is "true", you must set non-empty "allowedOrigins" list that will not include "*" `;
+      throw new DefaultError(e, {
+        meta: { corsOptions, allowedOrigins },
+      });
+    }
     //
     if (sentryOptions) {
       if (!sentryOptions.dsn) {
@@ -960,13 +979,24 @@ export class Server<
         throw new Error(e);
       }
     }
+    const { allowedOrigins } = this;
+    const defaultCORSOptions: ExpressCORSOptions = {
+      credentials: true,
+      origin(origin, callback) {
+        if (origin && allowedOrigins.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('Request blocked due to CORS policy'));
+        }
+      },
+    };
     //
     const ws = new WebsocketServer(
       // @ts-ignore
       httpServerOrPort,
       merge(
         {
-          cors: merge({ origin: '*', credentials: true }, corsOptions),
+          cors: merge(defaultCORSOptions, corsOptions),
         },
         opts,
         {
