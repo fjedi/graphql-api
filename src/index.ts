@@ -1003,10 +1003,6 @@ export class Server<
         }
       },
     };
-    if (!adapter && !redis.options.url) {
-      const e = `You must either provide "adapter" object for WS-server instance or have valid redis-server instance`;
-      throw new Error(e);
-    }
     //
     const ws = new WebsocketServer(
       // @ts-ignore
@@ -1021,7 +1017,7 @@ export class Server<
           wsEngine: wsEngine || 'ws',
           adapter:
             adapter ||
-            createAdapter(redis.options.url as string, {
+            createAdapter(`redis://${redis.options.host}:${redis.options.port}`, {
               requestsTimeout: 5000,
             }),
         },
