@@ -6,7 +6,8 @@ import Koa, { Middleware, Next, ParameterizedContext, DefaultContext, DefaultSta
 // Koa Router, for handling REST API requests
 import KoaRouter, { IParamMiddleware } from 'koa-router';
 // Enable cross-origin requests
-import koaCors, { Options as CORSOptions } from 'kcors';
+import koaCors, { Options as KoaCORSOptions } from 'kcors';
+import { CorsOptions as ExpressCORSOptions } from 'cors';
 //
 import bodyParser from 'koa-bodyparser';
 // HTTP header hardening
@@ -98,6 +99,13 @@ export * from './functions';
 
 // @ts-ignore
 type TodoAny = any;
+
+export type CORSOrigin = string | RegExp;
+
+export type CORSOptions = {
+  credentials: boolean;
+  origin: CORSOrigin | CORSOrigin[];
+};
 
 export type KoaApp<TAppContext, TDatabaseModels extends DatabaseModels> = Koa & {
   context: RouteContext<TAppContext, TDatabaseModels>;
@@ -259,7 +267,8 @@ export class Server<
   // Enable body parsing by default.  Leave `koa-bodyparser` opts as default
   bodyParserOptions: bodyParser.Options;
   // CORS options for `koa-cors`
-  corsOptions: CORSOptions;
+  koaCORSOptions: KoaCORSOptions;
+  wsCORSOptions: ExpressCORSOptions;
 
   // Multi-lang support
   static LANG_DETECTION_DEFAULT_OPTIONS = LANG_DETECTION_DEFAULT_OPTIONS;
@@ -337,7 +346,9 @@ export class Server<
       { jsonLimit: '50mb', textLimit: '10mb' },
       bodyParserOptions || {},
     );
-    this.corsOptions = merge({ cors: true }, corsOptions || {});
+    //
+    this.koaCORSOptions = merge({ credentials: true }, corsOptions || {});
+    this.wsCORSOptions = merge({ credentials: true }, corsOptions || {});
     //
     if (wsServerOptions) {
       this.wsServerOptions = wsServerOptions;
@@ -480,7 +491,7 @@ export class Server<
     // as a precursor to handling routes
     this.koaApp = new Koa()
       // Adds CORS config
-      .use(koaCors(this.corsOptions))
+      .use(koaCors(this.koaCORSOptions))
 
       // Error wrapper.  If an error manages to slip through the middleware
       // chain, it will be caught and logged back here
@@ -775,12 +786,6 @@ export class Server<
       }
     });
 
-    // @ts-ignore
-    this.wsEventEmitter = initWSEventEmitter(redis);
-
-    //
-    await this.startWSServer(httpServer, this.wsServerOptions);
-
     // Connect the REST API routes to the server
     this.koaApp.use(this.router.routes()).use(this.router.allowedMethods());
 
@@ -943,7 +948,7 @@ export class Server<
         path: this.graphqlOptions.path,
         //
         bodyParserConfig: this.bodyParserOptions,
-        cors: this.corsOptions,
+        cors: this.koaCORSOptions,
       });
       // Add subscription support
       if (subscriptions) {
@@ -982,12 +987,7 @@ export class Server<
       httpServerOrPort,
       merge(
         {
-          cors: {
-            origin: this.allowedOrigins,
-            methods: ['GET', 'POST'],
-            // allowedHeaders: ['some-custom-header'],
-            credentials: true,
-          },
+          cors: this.wsCORSOptions,
         },
         opts,
         {
@@ -1007,6 +1007,9 @@ export class Server<
       throw new Error('Failed to start websocket-server');
     }
     this.ws = ws;
+
+    // @ts-ignore
+    this.wsEventEmitter = initWSEventEmitter(redis);
 
     return ws;
   }
