@@ -1040,16 +1040,17 @@ export class Server<
   }
 
   async joinWSRoom(socket: Socket, roomId: string): Promise<void> {
-    if (!this.ws) {
-      logger.info(`Failed to join client to the room "${roomId}, ws-server is not running"`);
-      return;
-    }
-    // @ts-ignore
-    this.ws.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`, (err: Error) => {
-      if (err) {
-        this.logger.error(err);
+    try {
+      if (!this.ws) {
+        logger.info(`Failed to join client to the room "${roomId}, ws-server is not running"`);
+        return;
       }
-    });
+      // @ts-ignore
+      await this.ws.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`);
+    } catch (err) {
+      this.logger.error(err);
+      this.sentry?.captureException(err);
+    }
   }
 
   async sendWSEvent(roomId: string, event: string, data?: { [k: string]: TodoAny }): Promise<void> {
@@ -1246,7 +1247,7 @@ export class Server<
       }
       scope.setFingerprint(fingerprint);
       //
-      Sentry.captureException(exception);
+      this.sentry.captureException(exception);
     });
   }
 }
