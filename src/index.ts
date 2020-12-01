@@ -349,7 +349,13 @@ export class Server<
     );
     //
     this.corsOptions = merge({ credentials: true }, corsOptions, {
-      origin: this.allowedOrigins.join(','),
+      origin: (ctx: RouteContext<TAppContext, TDatabaseModels>) => {
+        const origin = ctx.get('origin');
+        if (this.allowedOrigins.includes(origin)) {
+          return origin;
+        }
+        throw new Error('Request blocked due to CORS policy');
+      },
     });
     //
     if (this.corsOptions.credentials && this.allowedOrigins.includes('*')) {
