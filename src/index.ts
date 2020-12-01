@@ -1247,7 +1247,7 @@ export class Server<
       }
       scope.setFingerprint(fingerprint);
       //
-      this.sentry.captureException(exception);
+      this.sentry?.captureException(exception);
     });
   }
 }
