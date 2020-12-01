@@ -7,7 +7,6 @@ import Koa, { Middleware, Next, ParameterizedContext, DefaultContext, DefaultSta
 import KoaRouter, { IParamMiddleware } from 'koa-router';
 // Enable cross-origin requests
 import koaCors, { Options as KoaCORSOptions } from 'kcors';
-import { CorsOptions as ExpressCORSOptions } from 'cors';
 //
 import bodyParser from 'koa-bodyparser';
 // HTTP header hardening
@@ -203,7 +202,7 @@ export type ServerParams<
   dbOptions: DatabaseConnectionOptions;
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
   bodyParserOptions?: bodyParser.Options;
-  corsOptions?: CORSOptions;
+  corsOptions?: KoaCORSOptions;
   wsServerOptions?: Partial<WSServerOptions>;
   routes?: Array<(server: Server<TAppContext, TDatabaseModels>) => void>;
   multiLangOptions?: MultiLangOptions;
@@ -266,9 +265,8 @@ export class Server<
   // Middlewares
   // Enable body parsing by default.  Leave `koa-bodyparser` opts as default
   bodyParserOptions: bodyParser.Options;
-  // CORS options for `koa-cors`
-  koaCORSOptions: KoaCORSOptions;
-  wsCORSOptions: ExpressCORSOptions;
+  // CORS options for Koa and socket.io
+  corsOptions: KoaCORSOptions;
 
   // Multi-lang support
   static LANG_DETECTION_DEFAULT_OPTIONS = LANG_DETECTION_DEFAULT_OPTIONS;
@@ -347,12 +345,7 @@ export class Server<
       bodyParserOptions || {},
     );
     //
-    this.koaCORSOptions = merge({ credentials: true }, corsOptions || {});
-    this.wsCORSOptions = merge({ credentials: true }, corsOptions || {});
-    //
-    if (wsServerOptions) {
-      this.wsServerOptions = wsServerOptions;
-    }
+    this.corsOptions = merge({ credentials: true }, corsOptions);
     //
     if (sentryOptions) {
       if (!sentryOptions.dsn) {
@@ -491,7 +484,7 @@ export class Server<
     // as a precursor to handling routes
     this.koaApp = new Koa()
       // Adds CORS config
-      .use(koaCors(this.koaCORSOptions))
+      .use(koaCors(this.corsOptions))
 
       // Error wrapper.  If an error manages to slip through the middleware
       // chain, it will be caught and logged back here
@@ -948,7 +941,7 @@ export class Server<
         path: this.graphqlOptions.path,
         //
         bodyParserConfig: this.bodyParserOptions,
-        cors: this.koaCORSOptions,
+        cors: this.corsOptions,
       });
       // Add subscription support
       if (subscriptions) {
@@ -974,7 +967,7 @@ export class Server<
     httpServerOrPort: number | http.Server,
     o?: Partial<WSServerOptions>,
   ): Promise<WebsocketServer> {
-    const { adapter, path, wsEngine, ...opts } = o || {};
+    const { adapter, path, wsEngine, cors: corsOptions, ...opts } = o || {};
     if (this.graphqlOptions?.subscriptions) {
       if (httpServerOrPort === this.httpServer || this.port === httpServerOrPort) {
         const e = `To avoid conflicts with graphQL's subscriptions, please provide different http instance for socket.io WS-server or set port-number that differs from httpServer's "port" value instead to start standalone WS-server`;
@@ -987,7 +980,7 @@ export class Server<
       httpServerOrPort,
       merge(
         {
-          cors: this.wsCORSOptions,
+          cors: merge({ credentials: true }, corsOptions),
         },
         opts,
         {
@@ -1015,8 +1008,12 @@ export class Server<
   }
 
   async joinWSRoom(socket: Socket, roomId: string): Promise<void> {
+    if (!this.ws) {
+      logger.info(`Failed to join client to the room "${roomId}, ws-server is not running"`);
+      return;
+    }
     // @ts-ignore
-    this.ws?.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`, (err: Error) => {
+    this.ws.of('/').adapter.remoteJoin(socket.client.id, `${roomId}`, (err: Error) => {
       if (err) {
         this.logger.error(err);
       }
@@ -1024,14 +1021,20 @@ export class Server<
   }
 
   async sendWSEvent(roomId: string, event: string, data?: { [k: string]: TodoAny }): Promise<void> {
-    // if (process.env.NODE_ENV !== 'production') {
-    logger.info(`Send event "${event}" to the room "${roomId}"`, data);
-    // }
-    if (roomId === 'any') {
-      this.wsEventEmitter?.emit(event, data);
+    if (!this.wsEventEmitter) {
+      logger.info(
+        `Failed to send event "${event}" to the room "${roomId}, ws-server is not running"`,
+        data,
+      );
       return;
     }
-    this.wsEventEmitter?.to(roomId).emit(event, data);
+    //
+    logger.info(`Send event "${event}" to the room "${roomId}"`, data);
+    if (roomId === 'any') {
+      this.wsEventEmitter.emit(event, data);
+      return;
+    }
+    this.wsEventEmitter.to(roomId).emit(event, data);
   }
 
   // Get access to Koa's `app` instance, for adding custom instantiation
