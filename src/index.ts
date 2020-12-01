@@ -1003,6 +1003,10 @@ export class Server<
         }
       },
     };
+    if (!adapter && !redis.options.url) {
+      const e = `You must either provide "adapter" object for WS-server instance or have valid redis-server instance`;
+      throw new Error(e);
+    }
     //
     const ws = new WebsocketServer(
       // @ts-ignore
@@ -1017,9 +1021,8 @@ export class Server<
           wsEngine: wsEngine || 'ws',
           adapter:
             adapter ||
-            createAdapter({
-              pubClient: redis,
-              subClient: redis.duplicate(),
+            createAdapter(redis.options.url as string, {
+              requestsTimeout: 5000,
             }),
         },
       ),
@@ -1225,6 +1228,7 @@ export class Server<
     //
     this.sentry.withScope((scope) => {
       if (request) {
+        // @ts-ignore
         scope.addEventProcessor((event) => Sentry.Handlers.parseRequest(event, request));
       }
       //
