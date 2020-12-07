@@ -21,7 +21,7 @@ import cookiesMiddleware from 'universal-cookie-koa';
 // High-precision timing, so we can debug response time to serve a request
 // @ts-ignore
 import ms from 'microseconds';
-import { get, pick, flattenDeep, merge, compact } from 'lodash';
+import { get, pick, flattenDeep, merge, compact, map, trim } from 'lodash';
 //
 import {
   Sequelize,
@@ -319,7 +319,15 @@ export class Server<
     }
     //
     if (!allowedOrigins) {
-      this.allowedOrigins = ['*'];
+      const ALLOWED_ORIGINS = map((process.env.ALLOWED_ORIGINS || '').split(','), trim);
+      if (ALLOWED_ORIGINS.length === 0) {
+        const e = `You must either provide "allowedOrigins" inside Server's constructor or set "ALLOWED_ORIGINS" env-variable`;
+        throw new DefaultError(e);
+      }
+      if (process.env.HOST) {
+        ALLOWED_ORIGINS.push(process.env.HOST);
+      }
+      this.allowedOrigins = ALLOWED_ORIGINS;
     } else {
       this.allowedOrigins = allowedOrigins;
     }
