@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "description": "NPM package template",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -45,8 +45,8 @@
     "@fjedi/jwt": "1.0.1",
     "@fjedi/logger": "1.0.2",
     "@fjedi/redis-client": "1.0.2",
-    "@sentry/integrations": "5.28.0",
-    "@sentry/node": "5.28.0",
+    "@sentry/integrations": "5.29.0",
+    "@sentry/node": "5.29.0",
     "@types/bignumber.js": "5.0.0",
     "@types/component-emitter": "1.2.10",
     "@types/cookie": "0.4.0",
