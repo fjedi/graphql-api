@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/fjedi/graphql-api#readme",
   "dependencies": {
-    "@fjedi/database-client": "3.5.0",
+    "@fjedi/database-client": "3.8.0",
     "@fjedi/errors": "1.0.0",
     "@fjedi/jwt": "1.0.1",
     "@fjedi/logger": "1.0.2",
