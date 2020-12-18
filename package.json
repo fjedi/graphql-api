@@ -55,7 +55,7 @@
     "@types/git-rev-sync": "2.0.0",
     "@types/http-terminator": "2.0.1",
     "@types/invariant": "2.2.34",
-    "@types/ioredis": "4.17.8",
+    "@types/ioredis": "4.17.9",
     "@types/ip": "1.1.0",
     "@types/json-buffer": "3.0.0",
     "@types/kcors": "2.2.3",
