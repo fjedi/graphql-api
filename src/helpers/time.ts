@@ -3,7 +3,9 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 
 dayjs.extend(isoWeek);
 
-export function formatDate(date: Date | Dayjs | string, format = 'D MMMM YYYY, HH:mm'): string {
+export type DateValue = Date | Dayjs | string | number;
+
+export function formatDate(date: DateValue, format = 'D MMMM YYYY, HH:mm'): string {
   return dayjs(date).format(format);
 }
 
