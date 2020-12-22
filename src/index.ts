@@ -81,7 +81,7 @@ import i18nextBackend from 'i18next-sync-fs-backend';
 //
 import { uuid } from './helpers/uuid';
 import { logServerStarted } from './helpers/console';
-import { time } from './helpers/time';
+import { time, TimeConstructor } from './helpers/time';
 import { BigNumber } from './helpers/numbers';
 import * as transliterator from './helpers/transliterator';
 import {
@@ -114,7 +114,7 @@ export type KoaApp<TAppContext, TDatabaseModels extends DatabaseModels> = Koa & 
 };
 
 export type ContextHelpers = {
-  time: typeof time;
+  time: TimeConstructor;
   uuid: typeof uuid;
   transliterator: typeof transliterator;
   BigNumber: typeof BigNumber;
