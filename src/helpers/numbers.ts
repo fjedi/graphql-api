@@ -1,7 +1,9 @@
-import BigNumber from 'bignumber.js';
+import BN from 'bignumber.js';
 
-BigNumber.config({
+BN.config({
   ROUNDING_MODE: 0,
 });
+
+export const BigNumber = BN;
 
 export default BigNumber;

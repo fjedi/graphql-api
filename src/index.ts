@@ -82,7 +82,7 @@ import i18nextBackend from 'i18next-sync-fs-backend';
 import { uuid } from './helpers/uuid';
 import { logServerStarted } from './helpers/console';
 import time from './helpers/time';
-import BigNumber from './helpers/numbers';
+import { BigNumber } from './helpers/numbers';
 import * as transliterator from './helpers/transliterator';
 import {
   setContextLang,
@@ -96,6 +96,8 @@ export type { Middleware, Next, ParameterizedContext, DefaultContext, DefaultSta
 //
 export * as shield from 'graphql-shield';
 export * from './functions';
+export * as time from './helpers/time';
+export * as numbers from './helpers/numbers';
 
 // @ts-ignore
 type TodoAny = any;
