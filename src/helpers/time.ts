@@ -1,26 +1,28 @@
 import dayjs, { Dayjs, ConfigType, OpUnitType } from 'dayjs';
-import isoWeek from 'dayjs/plugin/isoWeek';
+import isoWeekPlugin from 'dayjs/plugin/isoWeek';
+import utcPlugin from 'dayjs/plugin/utc';
 
-dayjs.extend(isoWeek);
+dayjs.extend(utcPlugin);
+dayjs.extend(isoWeekPlugin);
 
 type ISOUnitType = OpUnitType | 'isoWeek';
 export interface TimeInstance extends Dayjs {
+  // "isoWeek" plugin's methods
   isoWeekYear(): number;
   isoWeek(): number;
-  isoWeek(value: number): Dayjs;
-
+  isoWeek(value: number): TimeInstance;
   isoWeekday(): number;
-  isoWeekday(value: number): Dayjs;
-
-  startOf(unit: ISOUnitType): Dayjs;
-
-  endOf(unit: ISOUnitType): Dayjs;
-
+  isoWeekday(value: number): TimeInstance;
+  startOf(unit: ISOUnitType): TimeInstance;
+  endOf(unit: ISOUnitType): TimeInstance;
   isSame(date: ConfigType, unit?: ISOUnitType): boolean;
-
   isBefore(date: ConfigType, unit?: ISOUnitType): boolean;
-
   isAfter(date: ConfigType, unit?: ISOUnitType): boolean;
+
+  // "UTC" plugin's methods
+  utc(keepLocalTime?: boolean): TimeInstance;
+  local(): TimeInstance;
+  isUTC(): boolean;
 }
 export type TimeConstructor = (
   date?: dayjs.ConfigType,
