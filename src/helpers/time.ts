@@ -1,10 +1,27 @@
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs, { Dayjs, ConfigType, OpUnitType } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 
 dayjs.extend(isoWeek);
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface TimeInstance extends Dayjs {}
+type ISOUnitType = OpUnitType | 'isoWeek';
+export interface TimeInstance extends Dayjs {
+  isoWeekYear(): number;
+  isoWeek(): number;
+  isoWeek(value: number): Dayjs;
+
+  isoWeekday(): number;
+  isoWeekday(value: number): Dayjs;
+
+  startOf(unit: ISOUnitType): Dayjs;
+
+  endOf(unit: ISOUnitType): Dayjs;
+
+  isSame(date: ConfigType, unit?: ISOUnitType): boolean;
+
+  isBefore(date: ConfigType, unit?: ISOUnitType): boolean;
+
+  isAfter(date: ConfigType, unit?: ISOUnitType): boolean;
+}
 export type TimeConstructor = (
   date?: dayjs.ConfigType,
   format?: dayjs.OptionType,
