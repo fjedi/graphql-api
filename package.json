@@ -75,7 +75,7 @@
     "apollo-server-plugin-response-cache": "0.5.7",
     "bignumber.js": "9.0.1",
     "bluebird": "3.7.2",
-    "boxen": "4.2.0",
+    "boxen": "5.0.0",
     "chalk": "4.1.0",
     "cookie": "0.4.1",
     "cors": "2.8.5",
