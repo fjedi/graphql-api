@@ -52,7 +52,7 @@
     "@types/component-emitter": "1.2.10",
     "@types/cookie": "0.4.0",
     "@types/cors": "2.8.9",
-    "@types/geoip-lite": "1.4.0",
+    "@types/geoip-lite": "1.4.1",
     "@types/git-rev-sync": "2.0.0",
     "@types/http-terminator": "2.0.1",
     "@types/invariant": "2.2.34",
