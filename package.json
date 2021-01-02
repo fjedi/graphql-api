@@ -106,7 +106,7 @@
     "microseconds": "0.2.0",
     "mysql2": "2.2.5",
     "passport-vkontakte": "0.5.0",
-    "pretty-error": "2.1.2",
+    "pretty-error": "3.0.3",
     "sequelize": "6.3.5",
     "socket.io": "3.0.4",
     "socket.io-emitter": "3.2.0",
