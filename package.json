@@ -42,7 +42,7 @@
   "dependencies": {
     "@fjedi/database-client": "3.9.0",
     "@fjedi/errors": "1.0.1",
-    "@fjedi/jwt": "1.0.1",
+    "@fjedi/jwt": "1.0.2",
     "@fjedi/logger": "1.24.1",
     "@fjedi/redis-client": "1.0.2",
     "@graphql-tools/delegate": "7.0.8",
