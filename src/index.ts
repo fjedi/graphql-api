@@ -253,7 +253,7 @@ export class Server<
   environment: 'production' | 'development';
   host: string;
   port: number;
-  allowedOrigins: string[];
+  allowedOrigins: Set<string>;
   koaApp: KoaApp<TAppContext, TDatabaseModels>;
   router: KoaRouter;
   routes: Set<Route<TAppContext, TDatabaseModels>>;
@@ -329,9 +329,9 @@ export class Server<
       if (process.env.HOST) {
         ALLOWED_ORIGINS.push(process.env.HOST);
       }
-      this.allowedOrigins = ALLOWED_ORIGINS;
+      this.allowedOrigins = new Set(ALLOWED_ORIGINS);
     } else {
-      this.allowedOrigins = allowedOrigins;
+      this.allowedOrigins = new Set(allowedOrigins);
     }
     //
     this.environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
@@ -361,14 +361,14 @@ export class Server<
     this.corsOptions = merge({ credentials: true }, corsOptions, {
       origin: (ctx: RouteContext<TAppContext, TDatabaseModels>) => {
         const origin = ctx.get('origin');
-        if (this.allowedOrigins.includes(origin)) {
+        if (this.allowedOrigins.has('*') || this.allowedOrigins.has(origin)) {
           return origin;
         }
         throw new Error('Request blocked due to CORS policy');
       },
     });
     //
-    if (this.corsOptions.credentials && this.allowedOrigins.includes('*')) {
+    if (this.corsOptions.credentials && this.allowedOrigins.has('*')) {
       const e = `if corsOptions.credentials is "true", you must set non-empty "allowedOrigins" list that will not include "*" `;
       throw new DefaultError(e, {
         meta: { corsOptions: this.corsOptions, allowedOrigins: this.allowedOrigins },
