@@ -1006,7 +1006,7 @@ export class Server<
     const defaultCORSOptions: ExpressCORSOptions = {
       credentials: true,
       origin(origin, callback) {
-        if (origin && allowedOrigins.indexOf(origin) !== -1) {
+        if (origin && allowedOrigins.has(origin)) {
           callback(null, true);
         } else {
           callback(new Error('Request blocked due to CORS policy'));
