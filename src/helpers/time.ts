@@ -1,7 +1,9 @@
 import dayjs, { Dayjs, ConfigType, OpUnitType } from 'dayjs';
 import isoWeekPlugin from 'dayjs/plugin/isoWeek';
 import utcPlugin from 'dayjs/plugin/utc';
+import tzPlugin from 'dayjs/plugin/timezone';
 
+dayjs.extend(tzPlugin);
 dayjs.extend(utcPlugin);
 dayjs.extend(isoWeekPlugin);
 
@@ -23,6 +25,10 @@ export interface TimeInstance extends Dayjs {
   utc(keepLocalTime?: boolean): TimeInstance;
   local(): TimeInstance;
   isUTC(): boolean;
+
+  // "Timezone" plugin's methods
+  tz(timezone?: string, keepLocalTime?: boolean): TimeInstance;
+  offsetName(type?: 'short' | 'long'): string | undefined;
 }
 export type TimeConstructor = (
   date?: dayjs.ConfigType,
