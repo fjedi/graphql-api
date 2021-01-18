@@ -23,13 +23,6 @@ import cookiesMiddleware from 'universal-cookie-koa';
 import ms from 'microseconds';
 import { get, pick, flattenDeep, merge, compact, map, trim } from 'lodash';
 //
-import {
-  Sequelize,
-  ValidationError,
-  OptimisticLockError,
-  DatabaseError,
-  UniqueConstraintError,
-} from 'sequelize';
 import { applyMiddleware } from 'graphql-middleware';
 // Sentry
 import * as Sentry from '@sentry/node';
@@ -44,6 +37,11 @@ import {
   DatabaseConnection,
   DatabaseConnectionOptions,
   DatabaseModels,
+  Sequelize,
+  ValidationError,
+  OptimisticLockError,
+  DatabaseError,
+  UniqueConstraintError,
 } from '@fjedi/database-client';
 import { redis, RedisClient } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';

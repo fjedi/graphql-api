@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/fjedi/graphql-api#readme",
   "dependencies": {
-    "@fjedi/database-client": "3.9.1",
+    "@fjedi/database-client": "3.9.3",
     "@fjedi/errors": "1.0.1",
     "@fjedi/jwt": "1.0.2",
     "@fjedi/logger": "1.29.0",
@@ -107,7 +107,6 @@
     "mysql2": "2.2.5",
     "passport-vkontakte": "0.5.0",
     "pretty-error": "3.0.3",
-    "sequelize": "6.3.5",
     "socket.io": "3.1.0",
     "socket.io-emitter": "3.2.0",
     "socket.io-redis": "6.0.1",
