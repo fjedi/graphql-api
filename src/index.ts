@@ -1056,7 +1056,7 @@ export class Server<
         return;
       }
       //
-      const adapter = this.ws.of('/').adapter as RedisAdapter;
+      const adapter = (this.ws.of('/').adapter as unknown) as RedisAdapter;
       await adapter.remoteJoin(socket.id, `${roomId}`);
     } catch (err) {
       this.logger.error(err);
