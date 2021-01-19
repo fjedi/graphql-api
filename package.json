@@ -45,7 +45,7 @@
     "@fjedi/jwt": "1.0.2",
     "@fjedi/logger": "1.32.0",
     "@fjedi/redis-client": "1.0.2",
-    "@graphql-tools/delegate": "7.0.8",
+    "@graphql-tools/delegate": "7.0.9",
     "@sentry/integrations": "5.30.0",
     "@sentry/node": "5.30.0",
     "@types/bignumber.js": "5.0.0",
