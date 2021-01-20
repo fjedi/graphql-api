@@ -43,7 +43,7 @@
     "@fjedi/database-client": "3.9.4",
     "@fjedi/errors": "1.0.1",
     "@fjedi/jwt": "1.0.2",
-    "@fjedi/logger": "1.32.0",
+    "@fjedi/logger": "1.33.0",
     "@fjedi/redis-client": "1.0.2",
     "@graphql-tools/delegate": "7.0.9",
     "@sentry/integrations": "5.30.0",
