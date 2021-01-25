@@ -46,8 +46,6 @@
     "@fjedi/redis-client": "1.0.2",
     "@fjedi/rest-api": "0.0.4",
     "@graphql-tools/delegate": "7.0.9",
-    "@sentry/integrations": "5.30.0",
-    "@sentry/node": "5.30.0",
     "@types/component-emitter": "1.2.10",
     "@types/geoip-lite": "1.4.1",
     "@types/git-rev-sync": "2.0.0",
