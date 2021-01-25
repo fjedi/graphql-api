@@ -41,8 +41,6 @@ import { RedisCache } from 'apollo-server-cache-redis';
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
 // Multi-lang support
 import i18next from 'i18next';
-//
-import { logServerStarted } from './helpers/console';
 
 export type {
   RouteMethod,
