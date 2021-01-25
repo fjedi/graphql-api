@@ -6,7 +6,7 @@ import chalk, { Chalk } from 'chalk';
 // IP library, for determining the local network interface
 import ip from 'ip';
 
-import { getServerURL } from './env';
+import { getServerURL } from '@fjedi/rest-api';
 
 // ----------------------
 export type ServerStartLogger = {
