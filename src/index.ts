@@ -166,7 +166,7 @@ export class Server<
     });
     //
     return super.startServer({
-      async beforeListen() {
+      beforeListen: async () => {
         //
         if (this.sentry) {
           const graphQLSentryMiddleware = graphQLSentry({
