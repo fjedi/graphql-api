@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "6.0.3",
+  "version": "6.0.4",
   "description": "NPM package template",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
