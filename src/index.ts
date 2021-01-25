@@ -149,8 +149,6 @@ export class Server<
   // Enables internal GraphQL server.  Default GraphQL and GraphiQL endpoints
   // can be overridden
   async startServer(): Promise<http.Server> {
-    const httpServer = await super.startServer();
-
     // GraphQL Server
     const {
       typeDefs,
@@ -313,21 +311,10 @@ export class Server<
     });
     // Add subscription support
     if (subscriptions) {
-      apolloServer.installSubscriptionHandlers(httpServer);
+      apolloServer.installSubscriptionHandlers(this.httpServer);
     }
 
-    //
-    httpServer.listen(this.port);
-
-    // Log to the terminal that we're ready for action
-    logServerStarted({
-      type: 'server',
-    });
-
-    //
-    this.httpServer = httpServer;
-
-    return httpServer;
+    return super.startServer();
   }
 
   async startWSServer(httpServerOrPort: number | http.Server, o?: Partial<WSServerOptions>) {
