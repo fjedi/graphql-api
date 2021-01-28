@@ -107,6 +107,10 @@ export class Server<
         port: redis.options.port,
       },
     });
+    //
+    this.formatError = this.formatError.bind(this);
+    this.startServer = this.startServer.bind(this);
+    this.startWSServer = this.startWSServer.bind(this);
   }
 
   formatError(
