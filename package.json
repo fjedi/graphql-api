@@ -44,7 +44,7 @@
     "@fjedi/errors": "1.1.2",
     "@fjedi/jwt": "1.0.2",
     "@fjedi/redis-client": "1.0.2",
-    "@fjedi/rest-api": "0.0.6",
+    "@fjedi/rest-api": "0.0.7",
     "@graphql-tools/delegate": "7.0.9",
     "@types/component-emitter": "1.2.10",
     "@types/geoip-lite": "1.4.1",
