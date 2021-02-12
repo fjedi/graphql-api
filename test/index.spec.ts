@@ -62,6 +62,11 @@ describe('Test api server', function () {
         jsonLimit: '50mb',
         textLimit: '10mb',
       },
+      sentryOptions: {
+        dsn: process.env.SENTRY_DSN,
+        enabled: true,
+        integrations: [],
+      },
       graphqlOptions: {
         url: '/api',
         // @ts-ignore
