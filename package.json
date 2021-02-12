@@ -44,7 +44,7 @@
     "@fjedi/errors": "1.1.2",
     "@fjedi/jwt": "1.0.2",
     "@fjedi/redis-client": "1.0.2",
-    "@fjedi/rest-api": "0.0.9",
+    "@fjedi/rest-api": "0.0.10",
     "@graphql-tools/delegate": "7.0.10",
     "@types/component-emitter": "1.2.10",
     "@types/geoip-lite": "1.4.1",
@@ -86,7 +86,6 @@
   },
   "devDependencies": {
     "@types/cookie": "0.4.0",
-    "@types/expect": "24.3.0",
     "@types/jest": "26.0.20",
     "@types/lodash": "4.14.168",
     "@types/node": "14.14.27",
