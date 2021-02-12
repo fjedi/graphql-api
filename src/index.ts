@@ -175,7 +175,9 @@ export class Server<
         if (this.sentry) {
           const graphQLSentryMiddleware = graphQLSentry({
             forwardErrors: true,
+            // @ts-ignore
             config: this.sentryOptions,
+            // @ts-ignore
             withScope: (
               scope,
               error,
