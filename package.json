@@ -1,7 +1,7 @@
 {
   "name": "@fjedi/graphql-api",
   "version": "6.0.15",
-  "description": "NPM package template",
+  "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "files": [
