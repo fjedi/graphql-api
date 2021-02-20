@@ -69,7 +69,7 @@
     "invariant": "2.2.4",
     "ip": "1.1.5",
     "json-buffer": "3.0.1",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "useragent": "2.3.0"
   },
   "devDependencies": {
