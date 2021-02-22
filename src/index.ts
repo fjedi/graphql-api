@@ -208,12 +208,14 @@ export class Server<
               //
               scope.setTag('git_commit', git.message());
               scope.setTag('git_branch', git.branch());
+              // @ts-ignore
               if (context?.request?.body) {
+                // @ts-ignore
                 scope.setExtra('body', context?.request?.body);
               }
               //
               if (context?.request?.headers) {
-                const { origin, 'user-agent': ua } = context?.request?.headers;
+                const { origin, 'user-agent': ua } = context.request.headers;
                 scope.setExtra('origin', origin);
                 scope.setExtra('user-agent', ua);
                 //
@@ -311,6 +313,7 @@ export class Server<
           },
         });
         apolloServer.applyMiddleware({
+          // @ts-ignore
           app: this.koaApp,
           // server: apolloServer,
           path: this.graphqlOptions.path,
