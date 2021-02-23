@@ -206,8 +206,12 @@ export class Server<
                 });
               }
               //
-              scope.setTag('git_commit', git.message());
-              scope.setTag('git_branch', git.branch());
+              try {
+                scope.setTag('git_commit', git.message());
+                scope.setTag('git_branch', git.branch());
+              } catch (e) {
+                super.logger.warn('Failed to attach git info to the error sent to Sentry', e);
+              }
               // @ts-ignore
               if (context?.request?.body) {
                 // @ts-ignore
