@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -44,7 +44,7 @@
     "@fjedi/errors": "1.1.2",
     "@fjedi/jwt": "1.0.2",
     "@fjedi/redis-client": "1.0.2",
-    "@fjedi/rest-api": "0.0.11",
+    "@fjedi/rest-api": "0.0.12",
     "@graphql-tools/delegate": "7.0.10",
     "@types/component-emitter": "1.2.10",
     "@types/git-rev-sync": "2.0.0",
