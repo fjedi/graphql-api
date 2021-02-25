@@ -25,7 +25,8 @@ import { DatabaseModels } from '@fjedi/database-client';
 import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
-import { ApolloServer, ApolloError, Config, makeExecutableSchema } from 'apollo-server-koa';
+import { GraphQLError, GraphQLFormattedError } from 'graphql';
+import { ApolloServer, Config, makeExecutableSchema } from 'apollo-server-koa';
 import { shield, allow } from 'graphql-shield';
 import {
   IRules as PermissionRules,
@@ -33,14 +34,10 @@ import {
 } from 'graphql-shield/dist/types';
 // @ts-ignore
 import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
-// @ts-ignore
-import { FormatErrorWithContextExtension } from 'graphql-format-error-context-extension';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
-// Multi-lang support
-import i18next from 'i18next';
 
 export type {
   RouteMethod,
@@ -80,6 +77,7 @@ export type GraphQLServerOptions<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels
 > = Config & {
+  formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, any>>;
   path: string;
   resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
   permissions?: {
@@ -87,6 +85,10 @@ export type GraphQLServerOptions<
     options?: Partial<PermissionRulesOptions>;
   };
 };
+
+export interface GraphQLServerError extends GraphQLError {
+  originalError: DefaultError;
+}
 
 export class Server<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
@@ -113,18 +115,16 @@ export class Server<
     this.startWSServer = this.startWSServer.bind(this);
   }
 
-  formatError(graphQLError: ApolloError): ApolloError {
-    const {
-      extensions: { exception },
-    } = graphQLError;
+  formatError(graphQLError: GraphQLServerError): GraphQLFormattedError<Record<string, any>> {
+    const { originalError } = graphQLError;
     //
     if (this.environment === 'development') {
       return graphQLError;
     }
-    if (typeof exception?.status === 'number' && exception.status < 500) {
+    if (typeof originalError?.status === 'number' && originalError.status < 500) {
       return graphQLError;
     }
-    if (!Server.SYSTEM_ERROR_REGEXP.test(exception?.message)) {
+    if (!Server.SYSTEM_ERROR_REGEXP.test(originalError?.message)) {
       return graphQLError;
     }
     // eslint-disable-next-line no-param-reassign
@@ -255,13 +255,11 @@ export class Server<
           debug: process.env.NODE_ENV !== 'production',
           tracing: process.env.NODE_ENV !== 'production',
           logger: this.logger,
+          formatError: this.graphqlOptions.formatError || this.formatError,
           introspection: true,
           engine: engineOptions,
           subscriptions,
-          extensions: [
-            () => new PossibleTypesExtension(),
-            () => new FormatErrorWithContextExtension(this.formatError),
-          ],
+          extensions: [() => new PossibleTypesExtension()],
           plugins: [
             ResponseCachePlugin({
               sessionId: (requestContext) => {
