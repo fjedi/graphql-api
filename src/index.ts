@@ -121,10 +121,10 @@ export class Server<
     if (this.environment === 'development') {
       return graphQLError;
     }
-    if (exception.status && exception.status < 500) {
+    if (typeof exception?.status === 'number' && exception.status < 500) {
       return graphQLError;
     }
-    if (!Server.SYSTEM_ERROR_REGEXP.test(exception.message)) {
+    if (!Server.SYSTEM_ERROR_REGEXP.test(exception?.message)) {
       return graphQLError;
     }
     // eslint-disable-next-line no-param-reassign
