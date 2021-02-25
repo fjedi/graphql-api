@@ -113,38 +113,24 @@ export class Server<
     this.startWSServer = this.startWSServer.bind(this);
   }
 
-  formatError(
-    graphQLError: ApolloError,
-    context: RouteContext<DefaultContext, DefaultState>,
-  ): ApolloError {
+  formatError(graphQLError: ApolloError): ApolloError {
     const {
       extensions: { exception },
     } = graphQLError;
-    const { t: translate = (message: string) => message } = context;
-
-    if (
-      !['SequelizeValidationError', 'ValidationError'].includes(get(exception, 'name')) &&
-      !get(exception, 'status')
-    ) {
-      if (get(exception, 'name') === 'SequelizeDatabaseError') {
-        this.logger.error('SequelizeDatabaseError', exception.parent);
-      } else {
-        this.logger.error('formatError', graphQLError);
-      }
-      //
-      const message = context.i18next?.exists(graphQLError.message)
-        ? graphQLError.message
-        : 'The request failed, please try again later or contact technical support';
-
-      return Object.assign(graphQLError, {
-        message: translate(message),
-      });
-    }
     //
-    const message = `Errors.${graphQLError.message}`;
-    return Object.assign(graphQLError, {
-      message: i18next?.exists(message) ? translate(message) : graphQLError.message,
-    });
+    if (this.environment === 'development') {
+      return graphQLError;
+    }
+    if (exception.status && exception.status < 500) {
+      return graphQLError;
+    }
+    if (!Server.SYSTEM_ERROR_REGEXP.test(exception.message)) {
+      return graphQLError;
+    }
+    // eslint-disable-next-line no-param-reassign
+    graphQLError.message = Server.DEFAULT_ERROR_MESSAGE;
+    //
+    return graphQLError;
   }
 
   /* GRAPHQL */
