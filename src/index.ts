@@ -17,8 +17,6 @@ import Cookie from 'cookie';
 import { get, pick, merge } from 'lodash';
 //
 import { applyMiddleware } from 'graphql-middleware';
-// Sentry
-import { sentry as graphQLSentry } from 'graphql-middleware-sentry';
 import git from 'git-rev-sync';
 // Database
 import { DatabaseModels } from '@fjedi/database-client';
@@ -38,6 +36,8 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
 import ResponseCachePlugin from 'apollo-server-plugin-response-cache';
+//
+import { sentryMiddleware } from './helpers/sentry';
 
 export type {
   RouteMethod,
@@ -159,11 +159,10 @@ export class Server<
       beforeListen: async () => {
         //
         if (this.sentry) {
-          const graphQLSentryMiddleware = graphQLSentry({
-            forwardErrors: true,
-            // @ts-ignore
-            config: this.sentryOptions,
-            // @ts-ignore
+          const graphQLSentryMiddleware = sentryMiddleware<
+            ParameterizedContext<DefaultState, RouteContext<TAppContext, TDatabaseModels>>
+          >({
+            sentryInstance: this.sentry,
             withScope: (
               scope,
               error,
