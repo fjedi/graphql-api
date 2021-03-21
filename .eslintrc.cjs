@@ -5,13 +5,12 @@ const rules = {
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
     'prettier',
-    'prettier/@typescript-eslint',
   ],
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
     jsx: true,
-    project: 'tsconfig-cjs.json'
+    project: 'tsconfig-cjs.json',
   },
   env: {
     es6: true,
