@@ -316,6 +316,7 @@ export class Server<
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   async startWSServer(httpServerOrPort: number | http.Server, o?: Partial<WSServerOptions>) {
     const ws = await super.startWSServer(httpServerOrPort, o);
     if (this.graphqlOptions?.subscriptions) {
