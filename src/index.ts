@@ -68,14 +68,14 @@ export * as shield from 'graphql-shield';
 
 export interface ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
-  TDatabaseModels extends DatabaseModels
+  TDatabaseModels extends DatabaseModels,
 > extends APIServerParams<TAppContext, TDatabaseModels> {
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
 }
 
 export type GraphQLServerOptions<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
-  TDatabaseModels extends DatabaseModels
+  TDatabaseModels extends DatabaseModels,
 > = Config & {
   formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, any>>;
   path: string;
@@ -92,7 +92,7 @@ export interface GraphQLServerError extends GraphQLError {
 
 export class Server<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
-  TDatabaseModels extends DatabaseModels
+  TDatabaseModels extends DatabaseModels,
 > extends APIServer<TAppContext, TDatabaseModels> {
   pubsub: RedisPubSub;
   // Graphql-related staff
@@ -138,14 +138,8 @@ export class Server<
   // can be overridden
   async startServer(): Promise<http.Server> {
     // GraphQL Server
-    const {
-      typeDefs,
-      resolvers,
-      permissions,
-      subscriptions,
-      playground,
-      schemaDirectives,
-    } = this.graphqlOptions;
+    const { typeDefs, resolvers, permissions, subscriptions, playground, schemaDirectives } =
+      this.graphqlOptions;
     if (!typeDefs) {
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
