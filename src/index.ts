@@ -115,10 +115,9 @@ export class Server<
 
   formatError(graphQLError: GraphQLServerError): GraphQLFormattedError<Record<string, unknown>> {
     const { originalError, extensions } = graphQLError;
-    if (this.sentry) {
-      this.sendErrorToSentry(extensions?.exception || originalError || graphQLError, {}).catch(
-        this.logger.warn,
-      );
+    //
+    if (extensions?.code === 'PERSISTED_QUERY_NOT_FOUND') {
+      return graphQLError;
     }
     //
     if (this.environment === 'development') {
