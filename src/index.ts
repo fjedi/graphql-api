@@ -30,8 +30,6 @@ import {
   IRules as PermissionRules,
   IOptions as PermissionRulesOptions,
 } from 'graphql-shield/dist/types';
-// @ts-ignore
-import { PossibleTypesExtension } from 'apollo-progressive-fragment-matcher';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
