@@ -115,20 +115,25 @@ export class Server<
     this.startWSServer = this.startWSServer.bind(this);
   }
 
-  formatError(graphQLError: GraphQLServerError): GraphQLFormattedError<Record<string, any>> {
-    const { originalError } = graphQLError;
+  formatError(graphQLError: GraphQLServerError): GraphQLFormattedError<Record<string, unknown>> {
+    const { originalError, extensions } = graphQLError;
     //
     if (this.environment === 'development') {
       return graphQLError;
     }
-    if (typeof originalError?.status === 'number' && originalError.status < 500) {
-      return graphQLError;
-    }
-    if (!Server.SYSTEM_ERROR_REGEXP.test(originalError?.message)) {
+    const isPublicError =
+      typeof originalError?.status === 'number' &&
+      originalError.status < 500 &&
+      !Server.SYSTEM_ERROR_REGEXP.test(originalError?.message) &&
+      !Server.SYSTEM_ERROR_REGEXP.test(extensions?.exception?.name);
+    if (isPublicError) {
       return graphQLError;
     }
     // eslint-disable-next-line no-param-reassign
     graphQLError.message = Server.DEFAULT_ERROR_MESSAGE;
+    // @ts-ignore
+    // eslint-disable-next-line no-param-reassign
+    graphQLError.extensions = undefined;
     //
     return graphQLError;
   }
