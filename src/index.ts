@@ -115,8 +115,14 @@ export class Server<
 
   formatError(graphQLError: GraphQLServerError): GraphQLFormattedError<Record<string, unknown>> {
     const { originalError, extensions } = graphQLError;
+    if (this.sentry) {
+      this.sendErrorToSentry(extensions?.exception || originalError || graphQLError, {}).catch(
+        this.logger.warn,
+      );
+    }
     //
     if (this.environment === 'development') {
+      this.logger.error(graphQLError);
       return graphQLError;
     }
     const isPublicError =
