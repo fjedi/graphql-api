@@ -255,7 +255,7 @@ export class Server<
           introspection: true,
           engine: engineOptions,
           subscriptions,
-          extensions: [() => new PossibleTypesExtension()],
+          extensions: this.graphqlOptions.extensions,
           plugins: [
             ResponseCachePlugin({
               sessionId: (requestContext) => {
