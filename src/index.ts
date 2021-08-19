@@ -5,7 +5,6 @@ import {
   ContextState,
   WSServerOptions,
   ParameterizedContext,
-  DefaultContext,
   DefaultState,
   RouteContext,
 } from '@fjedi/rest-api';
@@ -24,7 +23,8 @@ import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
-import { ApolloServer, Config, makeExecutableSchema } from 'apollo-server-koa';
+import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
+import { ApolloServer, Config } from 'apollo-server-koa';
 import { shield, allow } from 'graphql-shield';
 import {
   IRules as PermissionRules,
@@ -82,6 +82,7 @@ export type GraphQLServerOptions<
     rules: PermissionRules;
     options?: Partial<PermissionRulesOptions>;
   };
+  schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
 };
 
 export interface GraphQLServerError extends GraphQLError {
