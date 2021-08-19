@@ -25,11 +25,8 @@ import { DefaultError } from '@fjedi/errors';
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import { ApolloServer, Config } from 'apollo-server-koa';
-import { shield, allow } from 'graphql-shield';
-import {
-  IRules as PermissionRules,
-  IOptions as PermissionRulesOptions,
-} from 'graphql-shield/dist/types';
+import { shield, allow, IRules as PermissionRules } from '@fjedi/graphql-shield';
+import type { IOptions as PermissionRulesOptions } from '@fjedi/graphql-shield/lib/cjs/types';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 // @ts-ignore
@@ -62,7 +59,7 @@ export type {
 } from '@fjedi/rest-api';
 export * from '@fjedi/rest-api';
 //
-export * as shield from 'graphql-shield';
+export * as shield from '@fjedi/graphql-shield';
 
 export interface ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
