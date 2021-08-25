@@ -124,9 +124,9 @@ export class Server<
     const errorCode = extensions?.exception?.status || originalError?.status;
     const isPublicError =
       typeof errorCode === 'number' &&
-      errorCode < 500 &&
-      !Server.SYSTEM_ERROR_REGEXP.test(originalError?.message) &&
-      !Server.SYSTEM_ERROR_REGEXP.test(extensions?.exception?.name);
+      (errorCode < 500 ||
+        (!Server.SYSTEM_ERROR_REGEXP.test(originalError?.message) &&
+          !Server.SYSTEM_ERROR_REGEXP.test(extensions?.exception?.name)));
     if (isPublicError) {
       return graphQLError;
     }
