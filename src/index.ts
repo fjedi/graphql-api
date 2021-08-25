@@ -60,7 +60,6 @@ export type {
 export * from '@fjedi/rest-api';
 //
 export * as shield from '@fjedi/graphql-shield';
-
 export interface ServerParams<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels,
@@ -122,9 +121,10 @@ export class Server<
       this.logger.error(graphQLError);
       return graphQLError;
     }
+    const errorCode = extensions?.exception?.status || originalError?.status;
     const isPublicError =
-      typeof originalError?.status === 'number' &&
-      originalError.status < 500 &&
+      typeof errorCode === 'number' &&
+      errorCode < 500 &&
       !Server.SYSTEM_ERROR_REGEXP.test(originalError?.message) &&
       !Server.SYSTEM_ERROR_REGEXP.test(extensions?.exception?.name);
     if (isPublicError) {
