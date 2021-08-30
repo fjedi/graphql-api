@@ -46,7 +46,7 @@
     "@fjedi/graphql-shield": "0.0.4",
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
-    "@fjedi/redis-client": "1.0.2",
+    "@fjedi/redis-client": "1.155.0",
     "@fjedi/rest-api": "2.2.4",
     "@graphql-tools/delegate": "8.1.1",
     "@graphql-tools/schema": "7.1.5",
