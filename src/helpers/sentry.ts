@@ -55,7 +55,7 @@ export const sentryMiddleware = <Context>({
 
       return res;
     } catch (error) {
-      captureException(sentryInstance, error, ctx, withScope, reportError);
+      captureException(sentryInstance, error as Error, ctx, withScope, reportError);
 
       throw error;
     }
