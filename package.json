@@ -95,5 +95,9 @@
       "npm run lint:fix",
       "git add"
     ]
+  },
+  "engines": {
+    "node": ">=15",
+    "npm": ">=7"
   }
 }
