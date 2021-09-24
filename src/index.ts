@@ -306,7 +306,11 @@ export class Server<
           path: this.graphqlOptions.path,
           //
           bodyParserConfig: this.bodyParserOptions,
-          cors: this.corsOptions,
+          cors: {
+            ...this.corsOptions,
+            allowMethods:
+              this.corsOptions?.allowMethods === null ? undefined : this.corsOptions?.allowMethods,
+          },
         });
         // Add subscription support
         if (subscriptions) {
