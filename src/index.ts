@@ -23,7 +23,7 @@ import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
-import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 import { ApolloServer, Config } from 'apollo-server-koa';
 import { shield, allow, IRules as PermissionRules } from '@fjedi/graphql-shield';
 import type { IOptions as PermissionRulesOptions } from '@fjedi/graphql-shield/lib/cjs/types';
@@ -78,7 +78,6 @@ export type GraphQLServerOptions<
     rules: PermissionRules;
     options?: Partial<PermissionRulesOptions>;
   };
-  schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
 };
 
 export interface GraphQLServerError extends GraphQLError {
@@ -144,15 +143,13 @@ export class Server<
   // can be overridden
   async startServer(): Promise<http.Server> {
     // GraphQL Server
-    const { typeDefs, resolvers, permissions, subscriptions, playground, schemaDirectives } =
-      this.graphqlOptions;
+    const { typeDefs, resolvers, permissions, subscriptions, playground } = this.graphqlOptions;
     if (!typeDefs) {
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
     let schema = makeExecutableSchema({
       typeDefs,
       resolvers: resolvers(this),
-      schemaDirectives,
     });
     //
     return super.startServer({
