@@ -47,7 +47,7 @@
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
     "@fjedi/redis-client": "1.166.0",
-    "@fjedi/rest-api": "2.3.1",
+    "@fjedi/rest-api": "2.3.4",
     "@graphql-tools/delegate": "8.2.2",
     "@graphql-tools/schema": "8.2.0",
     "@types/component-emitter": "1.2.10",
@@ -68,6 +68,7 @@
     "ip": "1.1.5",
     "json-buffer": "3.0.1",
     "lodash": "4.17.21",
+    "mysql2": "2.3.0",
     "useragent": "2.3.0"
   },
   "devDependencies": {

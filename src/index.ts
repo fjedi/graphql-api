@@ -71,7 +71,7 @@ export type GraphQLServerOptions<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels,
 > = Config & {
-  formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, any>>;
+  formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, unknown>>;
   path: string;
   resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
   permissions?: {
