@@ -50,7 +50,7 @@
     "@fjedi/rest-api": "2.3.5",
     "@graphql-tools/delegate": "8.2.3",
     "@graphql-tools/schema": "8.2.0",
-    "@types/component-emitter": "1.2.10",
+    "@types/component-emitter": "1.2.11",
     "@types/git-rev-sync": "2.0.0",
     "@types/ip": "1.1.0",
     "@types/useragent": "2.3.1",
