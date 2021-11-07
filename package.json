@@ -48,7 +48,7 @@
     "@fjedi/logger": "1.46.3",
     "@fjedi/redis-client": "1.166.0",
     "@fjedi/rest-api": "2.3.5",
-    "@graphql-tools/delegate": "8.4.1",
+    "@graphql-tools/delegate": "8.4.2",
     "@graphql-tools/schema": "8.3.1",
     "@types/component-emitter": "1.2.11",
     "@types/git-rev-sync": "2.0.0",
