@@ -25,6 +25,7 @@ import { ApolloServer, ServerRegistration, Config } from 'apollo-server-koa';
 import {
   ApolloServerPluginCacheControl,
   ApolloServerPluginDrainHttpServer,
+  ApolloServerPluginLandingPageDisabled,
   ApolloServerPluginLandingPageGraphQLPlayground,
   ApolloServerPluginLandingPageGraphQLPlaygroundOptions,
 } from 'apollo-server-core';
@@ -83,7 +84,7 @@ export type GraphQLServerOptions<
       path: WSServerOptions['path'];
     };
     schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
-    playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions;
+    playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions | boolean;
   };
 
 export interface GraphQLServerError extends GraphQLError {
@@ -229,7 +230,11 @@ export class Server<
           introspection: true,
           csrfPrevention: true,
           plugins: [
-            ApolloServerPluginLandingPageGraphQLPlayground(playground),
+            playground === false
+              ? ApolloServerPluginLandingPageDisabled()
+              : ApolloServerPluginLandingPageGraphQLPlayground(
+                  playground === true ? undefined : playground,
+                ),
             ApolloServerPluginCacheControl({
               defaultMaxAge: 0,
             }),
