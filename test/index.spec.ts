@@ -68,9 +68,8 @@ describe('Test api server', function () {
       //   integrations: [],
       // },
       graphqlOptions: {
-        url: '/api',
-        // @ts-ignore
-        schema: {},
+        path: '/api',
+      },
       dbOptions: {
         sync: true,
         maxConnections: Math.floor(DB_MAX_CONNECTIONS / NODE_INSTANCES_NUMBER),
