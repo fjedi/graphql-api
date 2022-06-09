@@ -75,7 +75,7 @@ export type GraphQLServerOptions<
   Omit<ServerRegistration, 'app'> & {
     // formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, unknown>>;
     path: string;
-    typeDefs?: IExecutableSchemaDefinition<TAppContext>['typeDefs'];
+    typeDefs?: Config['typeDefs'];
     resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
     subscriptions?: GraphQLWSOptions & {
       path: WSServerOptions['path'];
@@ -161,7 +161,7 @@ export class Server<
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
     const schema = makeExecutableSchema({
-      typeDefs,
+      typeDefs: typeDefs as any,
       resolvers: resolvers(this),
       schemaDirectives,
     });
