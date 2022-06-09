@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "10.0.0",
+  "version": "10.0.1",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -43,7 +43,6 @@
     "@fjedi/database-client": "4.2.3",
     "@fjedi/errors": "1.1.4",
     "@fjedi/graphql-resolvers": "2.35.9",
-    "@fjedi/graphql-shield": "0.1.2",
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
     "@fjedi/redis-client": "1.167.1",
@@ -54,22 +53,25 @@
     "@types/git-rev-sync": "2.0.0",
     "@types/ip": "1.1.0",
     "@types/useragent": "2.3.1",
+    "@types/ws": "8.5.3",
     "@types/yup": "0.29.14",
-    "apollo-server-cache-redis": "1.5.0",
-    "apollo-server-koa": "2.25.4",
-    "apollo-server-plugin-response-cache": "0.9.0",
+    "apollo-server-cache-redis": "3.3.1",
+    "apollo-server-core": "3.8.2",
+    "apollo-server-koa": "3.8.2",
+    "apollo-server-plugin-response-cache": "3.6.0",
     "bluebird": "3.7.2",
     "cookie": "0.5.0",
     "git-rev-sync": "3.0.2",
-    "graphql": "15.8.0",
-    "graphql-middleware": "6.1.29",
+    "graphql": "16.5.0",
     "graphql-redis-subscriptions": "2.4.2",
+    "graphql-ws": "5.8.2",
     "invariant": "2.2.4",
     "ip": "1.1.8",
     "json-buffer": "3.0.1",
     "lodash": "4.17.21",
     "mysql2": "2.3.3",
-    "useragent": "2.3.0"
+    "useragent": "2.3.0",
+    "ws": "8.7.0"
   },
   "devDependencies": {
     "@types/cookie": "0.5.1",
@@ -101,5 +103,9 @@
   "engines": {
     "node": ">=18",
     "npm": ">=7"
+  },
+  "overrides": {
+    "graphql@>14 <16": "^16.0.0",
+    "graphql-subscriptions@1": "^2.0.0"
   }
 }
