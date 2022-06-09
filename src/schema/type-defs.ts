@@ -82,20 +82,17 @@ const typeDefs = gql`
     id: ID!
   }
 
-  enum ViewerRole {
-    ADMIN
-    OPERATOR
-    USER
-  }
   input ViewerCredentialsInput {
     email: EmailAddress!
     password: String!
   }
+
   enum ViewerRole {
     ADMIN
     OPERATOR
     USER
   }
+
   enum ResponseStatus {
     SUCCESS
     FAILURE
