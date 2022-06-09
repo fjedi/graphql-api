@@ -9,6 +9,11 @@
     "outDir": "./lib/esm",
     // Search under node_modules for non-relative imports.
     "moduleResolution": "node",
+    "types": [
+      "./src/types",
+      "node",
+      "jest",
+    ],
   },
   "include": [
     "./src"

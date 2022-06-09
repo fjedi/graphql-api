@@ -6,11 +6,12 @@ import {
   WSServerOptions,
   ParameterizedContext,
 } from '@fjedi/rest-api';
+import { decodeJWT } from '@fjedi/jwt';
 import http from 'http';
 // Parse userAgent
 // import UserAgent from 'useragent';
 // Cookies
-// import Cookie from 'cookie';
+import Cookie from 'cookie';
 import { get, pick } from 'lodash';
 // import git from 'git-rev-sync';
 // Database
@@ -19,15 +20,22 @@ import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
 import { GraphQLError } from 'graphql';
-import { makeExecutableSchema } from '@graphql-tools/schema';
+import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import { ApolloServer, ServerRegistration, Config } from 'apollo-server-koa';
-import { ApolloServerPluginDrainHttpServer } from 'apollo-server-core';
+import {
+  ApolloServerPluginCacheControl,
+  ApolloServerPluginDrainHttpServer,
+  ApolloServerPluginLandingPageGraphQLPlayground,
+  ApolloServerPluginLandingPageGraphQLPlaygroundOptions,
+} from 'apollo-server-core';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
-import { WebSocketServer, ServerOptions as WsServerOptions } from 'ws';
+import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
+import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
 
 export { withFilter } from 'graphql-subscriptions';
+export { gql } from 'apollo-server-koa';
 
 export type {
   RouteMethod,
@@ -67,8 +75,13 @@ export type GraphQLServerOptions<
   Omit<ServerRegistration, 'app'> & {
     // formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, unknown>>;
     path: string;
+    typeDefs?: IExecutableSchemaDefinition<TAppContext>['typeDefs'];
     resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
-    subscriptions?: WsServerOptions;
+    subscriptions?: GraphQLWSOptions & {
+      path: WSServerOptions['path'];
+    };
+    schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
+    playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions;
   };
 
 export interface GraphQLServerError extends GraphQLError {
@@ -137,9 +150,11 @@ export class Server<
     const {
       typeDefs,
       resolvers,
+      playground,
       subscriptions,
       onHealthCheck,
       disableHealthCheck,
+      schemaDirectives,
       ...apolloServerOptions
     } = this.graphqlOptions;
     if (!typeDefs) {
@@ -148,17 +163,61 @@ export class Server<
     const schema = makeExecutableSchema({
       typeDefs,
       resolvers: resolvers(this),
+      schemaDirectives,
     });
     //
     return super.startServer({
       beforeListen: async () => {
         // Create websocket server
-        const wsServer = new WebSocketServer({
-          server: this.httpServer,
-          path: subscriptions?.path ?? '/subscriptions',
-        });
-        // Save the returned server's info so we can shut down this server later
-        const serverCleanup = useServer({ schema }, wsServer);
+        let serverCleanup: Disposable;
+        if (subscriptions) {
+          const wsServer = new WebSocketServer({
+            server: this.httpServer,
+            path: subscriptions?.path ?? '/subscriptions',
+          });
+          // Save the returned server's info so we can shut down this server later
+          serverCleanup = useServer(
+            {
+              schema,
+              context: ({ extra }) => ({ db: this.db, ...extra }),
+              onConnect: async (context: GraphQLWSContext): Promise<boolean> => {
+                this.logger.debug('graphql-ws.onConnect', context);
+                const { User, UserSession } = this.db!.models;
+                const { connectionParams, extra } = context;
+
+                const token =
+                  ((connectionParams?.authToken ||
+                    connectionParams?.Authorization ||
+                    extra.request.headers.authorization) as string | null) ||
+                  Cookie.parse(extra.request.headers.cookie)?.token;
+                //
+                this.logger.debug('graphql-ws.authToken', { token });
+                extra.wsAdapter = 'graphql-ws';
+                //
+                if (token) {
+                  try {
+                    const { sub } = decodeJWT(token) as { sub: string };
+                    if (!sub) {
+                      return false;
+                    }
+                    const session = await UserSession.findByPk(token);
+                    //
+                    if (session) {
+                      const viewer = await User.findByPk(sub);
+                      context.extra = { viewer, token, session };
+                      return true;
+                    }
+                  } catch (error) {
+                    return false;
+                  }
+                }
+                return false;
+              },
+              ...subscriptions,
+            },
+            wsServer,
+          );
+        }
 
         const apolloServer = new ApolloServer({
           schema,
@@ -167,12 +226,18 @@ export class Server<
           introspection: true,
           csrfPrevention: true,
           plugins: [
+            ApolloServerPluginLandingPageGraphQLPlayground(playground),
+            ApolloServerPluginCacheControl({
+              defaultMaxAge: 0,
+            }),
             ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }),
             {
               async serverWillStart() {
                 return {
                   async drainServer() {
-                    await serverCleanup.dispose();
+                    if (serverCleanup) {
+                      await serverCleanup.dispose();
+                    }
                   },
                 };
               },
