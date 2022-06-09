@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "10.1.1",
+  "version": "10.1.2",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -106,7 +106,10 @@
     "npm": ">=7"
   },
   "overrides": {
-    "graphql@>14 <16": "^16.0.0",
+    "graphql@>12 <16.5.0": "16.5.0",
     "graphql-subscriptions@1": "^2.0.0"
+  },
+  "resolutions": {
+    "graphql": "16.5.0"
   }
 }
