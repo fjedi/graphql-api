@@ -20,7 +20,7 @@ import { DefaultError } from '@fjedi/errors';
 //
 import { GraphQLError } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { ApolloServer, Config, ServerRegistration } from 'apollo-server-koa';
+import { ApolloServer, ServerRegistration, Config } from 'apollo-server-koa';
 import { ApolloServerPluginDrainHttpServer } from 'apollo-server-core';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';

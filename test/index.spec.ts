@@ -37,6 +37,12 @@ describe('Test api server', function () {
   });
 
   it('Should create instance of Server', async function () {
+    const ViewerResolver = {
+      viewer() {
+        return null;
+      },
+    };
+    const resolvers: any = () => ViewerResolver;
     server = new Server({
       allowedOrigins: ['example.com'],
       // Set-up CORS to allow credentials to be passed to origins outside of the
@@ -69,6 +75,7 @@ describe('Test api server', function () {
       // },
       graphqlOptions: {
         path: '/api',
+        resolvers,
       },
       dbOptions: {
         sync: true,
