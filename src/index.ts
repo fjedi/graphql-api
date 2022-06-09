@@ -27,6 +27,8 @@ import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer, ServerOptions as WsServerOptions } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 
+export { withFilter } from 'graphql-subscriptions';
+
 export type {
   RouteMethod,
   RouteContext,
