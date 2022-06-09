@@ -71,47 +71,6 @@ describe('Test api server', function () {
         url: '/api',
         // @ts-ignore
         schema: {},
-        subscriptions: {
-          async onConnect(
-            connectionParams: any,
-            webSocket,
-            { request: { headers } }: { request: WSRequest },
-          ) {
-            // const db = config.getDatabaseInstance();
-            // if (headers.cookie && headers.cookie.indexOf('token') > -1) {
-            //   const { token } = Cookie.parse(headers.cookie);
-            //   const userId = token && User.getIdFromToken(token);
-            //   //
-            //   if (userId) {
-            //     const session = await UserSession.findByPk(token);
-            //     //
-            //     if (session && !session.expiredAt) {
-            //       const viewer = await User.findByPk(userId);
-            //       return {
-            //         db,
-            //         helpers: contextHelpers,
-            //         state: {
-            //           viewer,
-            //           token,
-            //           session,
-            //         },
-            //       };
-            //     }
-            //   }
-            // }
-            throw new Error('Missing auth token!');
-          },
-          // onOperation(message, params, webSocket) {
-          //   return params;
-          // },
-          // onOperationComplete(webSocket, d, a) {
-          //   return webSocket;
-          // },
-          // onDisconnect() {
-          //   logger.info('Client disconnected');
-          // },
-        },
-      },
       dbOptions: {
         sync: true,
         maxConnections: Math.floor(DB_MAX_CONNECTIONS / NODE_INSTANCES_NUMBER),
