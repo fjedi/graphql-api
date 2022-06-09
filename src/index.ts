@@ -197,6 +197,8 @@ export class Server<
           cache: new RedisCache(pick(redis.options, ['host', 'port'])),
           ...apolloServerOptions,
         });
+        await apolloServer.start();
+        //
         apolloServer.applyMiddleware({
           // @ts-ignore
           app: this.koaApp,
