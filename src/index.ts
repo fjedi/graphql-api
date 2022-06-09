@@ -12,14 +12,14 @@ import http from 'http';
 // import UserAgent from 'useragent';
 // Cookies
 import Cookie from 'cookie';
-import { get, pick } from 'lodash';
+import { get, pick, merge } from 'lodash';
 // import git from 'git-rev-sync';
 // Database
 import { DatabaseModels } from '@fjedi/database-client';
 import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
-import { GraphQLError } from 'graphql';
+import { GraphQLError, DocumentNode } from 'graphql';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import { ApolloServer, ServerRegistration, Config } from 'apollo-server-koa';
 import {
@@ -33,6 +33,8 @@ import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
+import defaultTypeDefs from './schema/type-defs';
+import defaultResolvers from './schema/resolvers';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
@@ -75,7 +77,7 @@ export type GraphQLServerOptions<
   Omit<ServerRegistration, 'app'> & {
     // formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, unknown>>;
     path: string;
-    typeDefs?: Config['typeDefs'];
+    typeDefs?: DocumentNode;
     resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
     subscriptions?: GraphQLWSOptions & {
       path: WSServerOptions['path'];
@@ -160,9 +162,10 @@ export class Server<
     if (!typeDefs) {
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
+
     const schema = makeExecutableSchema({
-      typeDefs: typeDefs as any,
-      resolvers: resolvers(this),
+      typeDefs: [defaultTypeDefs, typeDefs],
+      resolvers: merge(defaultResolvers(this), resolvers(this)),
       schemaDirectives,
     });
     //
