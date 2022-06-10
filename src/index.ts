@@ -183,9 +183,8 @@ export class Server<
           serverCleanup = useServer(
             {
               schema,
-              context: ({ extra }) => ({ db: this.db, ...extra }),
+              context: ({ extra }) => ({ db: this.db, state: extra }),
               onConnect: async (context: GraphQLWSContext): Promise<boolean> => {
-                this.logger.debug('graphql-ws.onConnect', context);
                 const { User, UserSession } = this.db!.models;
                 const { connectionParams, extra } = context;
 
@@ -195,7 +194,7 @@ export class Server<
                     extra.request.headers.authorization) as string | null) ||
                   Cookie.parse(extra.request.headers.cookie)?.token;
                 //
-                this.logger.debug('graphql-ws.authToken', { token });
+                this.logger.info('graphql-ws.authToken', { token });
                 extra.wsAdapter = 'graphql-ws';
                 //
                 if (token) {
