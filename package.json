@@ -74,7 +74,7 @@
     "lodash": "4.17.21",
     "mysql2": "2.3.3",
     "useragent": "2.3.0",
-    "ws": "8.7.0"
+    "ws": "8.8.0"
   },
   "devDependencies": {
     "@types/cookie": "0.5.1",
