@@ -42,6 +42,7 @@ import defaultResolvers from './schema/resolvers';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
+export { FileUpload, UploadOptions, Upload } from 'graphql-upload';
 
 export type {
   RouteMethod,
