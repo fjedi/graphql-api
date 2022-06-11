@@ -27,7 +27,6 @@ export default function apolloSentryPlugin<
            to request-specific lifecycle events. */
       return {
         async didEncounterErrors(ctx) {
-          console.log('Request did encounter errors', ctx);
           const { operationName } = ctx; // name of the query/mutation (logIn, viewer, etc)
           const operationKind = ctx.operation?.operation; // mutation || 'query' || 'subscription'
 
