@@ -34,6 +34,9 @@ import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
+import { createWriteStream, WriteStream } from 'fs';
+import { FileUpload, graphqlUploadKoa } from 'graphql-upload';
+import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/type-defs';
 import defaultResolvers from './schema/resolvers';
 
@@ -144,6 +147,22 @@ export class Server<
   //   //
   //   return graphQLError;
   // }
+
+  static async readGraphQLFileStream(
+    file: Promise<FileUpload>,
+    dest: WriteStream | string,
+  ): Promise<Omit<FileUpload, 'createReadStream'>> {
+    const { createReadStream, ...bypassProps } = await file;
+    // Invoking the `createReadStream` will return a Readable Stream.
+    // See https://nodejs.org/api/stream.html#stream_readable_streams
+    const stream = createReadStream();
+
+    const out = typeof dest === 'string' ? createWriteStream(dest) : dest;
+    stream.pipe(out);
+    await finished(out);
+
+    return bypassProps;
+  }
 
   /* GRAPHQL */
   // Enables internal GraphQL server.  Default GraphQL and GraphiQL endpoints
@@ -270,6 +289,8 @@ export class Server<
           ...apolloServerOptions,
         });
         await apolloServer.start();
+        // This middleware should be added before calling `applyMiddleware`.
+        this.koaApp.use(graphqlUploadKoa());
         //
         apolloServer.applyMiddleware({
           // @ts-ignore
