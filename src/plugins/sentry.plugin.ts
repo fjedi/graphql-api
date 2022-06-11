@@ -28,11 +28,20 @@ export default function apolloSentryPlugin<
       return {
         async didEncounterErrors(ctx) {
           console.log('Request did encounter errors', ctx);
+          const operationName = ctx.operation?.operation;
+
           // If we couldn't parse the operation (usually invalid queries)
           if (!ctx.operation) {
             ctx.errors.forEach((err) => {
               sentry.withScope((scope) => {
                 scope.setExtra('query', ctx.request.query);
+                // Group errors together based on their operationName
+                const fingerprint = ['{{ default }}'];
+                if (operationName) {
+                  fingerprint.push(operationName);
+                }
+                scope.setFingerprint(fingerprint);
+
                 sentry.captureException(err);
               });
             });
@@ -84,8 +93,8 @@ export default function apolloSentryPlugin<
               }
 
               // Annotate whether failing operation was query/mutation/subscription
-              if (ctx.operation) {
-                scope.setTag('kind', ctx.operation.operation);
+              if (operationName) {
+                scope.setTag('kind', operationName);
               }
 
               // Log query and variables as extras (make sure to strip out sensitive data!)
@@ -101,6 +110,12 @@ export default function apolloSentryPlugin<
                   level: 'debug',
                 });
               }
+              // Group errors together based on their operationName
+              const fingerprint = ['{{ default }}'];
+              if (operationName) {
+                fingerprint.push(operationName);
+              }
+              scope.setFingerprint(fingerprint);
 
               sentry.captureException(err);
             });

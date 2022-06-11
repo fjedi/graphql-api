@@ -279,7 +279,8 @@ export class Server<
           csrfPrevention: true,
           plugins,
           // Bind the current request context, so it's accessible within GraphQL
-          context: ({ ctx, connection }) => {
+          context: ({ ctx, connection, ...bypassContextProps }) => {
+            console.log('bypassContextProps', bypassContextProps);
             //
             const context = get(connection, 'context', ctx);
             context.db = this.db;
