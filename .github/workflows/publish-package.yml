@@ -20,7 +20,6 @@ jobs:
           redis-version: ${{ matrix.redis-version }}
       - run: npm ci
       - run: npm run lint
-        # - run: npm test
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       - uses: JS-DevTools/npm-publish@v1

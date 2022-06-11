@@ -1,6 +1,7 @@
 import { DefaultContext, ParameterizedContext } from '@fjedi/rest-api';
 import { DefaultError } from '@fjedi/errors';
-import { GraphQLUpload } from 'graphql-upload';
+// @ts-ignore
+import GraphQLUpload from 'graphql-upload/GraphQLUpload';
 import {
   DateTimeResolver,
   EmailAddressResolver,

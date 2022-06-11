@@ -33,7 +33,9 @@ import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
 import { createWriteStream, WriteStream } from 'fs';
-import { FileUpload, graphqlUploadKoa } from 'graphql-upload';
+// @ts-ignore
+import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa';
+import type { FileUpload } from 'graphql-upload';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/type-defs';
 import defaultResolvers from './schema/resolvers';
@@ -41,7 +43,7 @@ import sentryPlugin from './plugins/sentry.plugin';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
-export { FileUpload, UploadOptions, Upload } from 'graphql-upload';
+export type { FileUpload, UploadOptions } from 'graphql-upload';
 
 export type {
   RouteMethod,
