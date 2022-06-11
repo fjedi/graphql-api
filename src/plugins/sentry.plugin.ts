@@ -69,7 +69,7 @@ export default function apolloSentryPlugin<
                 }
               }
               // @ts-ignore
-              const { id, email } = ctx.state;
+              const { id, email } = ctx.state?.viewer ?? {};
               scope.setUser({
                 id,
                 email: email || undefined,
