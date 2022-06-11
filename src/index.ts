@@ -279,9 +279,7 @@ export class Server<
           csrfPrevention: true,
           plugins,
           // Bind the current request context, so it's accessible within GraphQL
-          context: ({ ctx, connection, ...bypassContextProps }) => {
-            console.log('bypassContextProps', bypassContextProps);
-            //
+          context: ({ ctx, connection }) => {
             const context = get(connection, 'context', ctx);
             context.db = this.db;
             context.helpers = this.koaApp.context.helpers;
