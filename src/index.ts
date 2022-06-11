@@ -34,7 +34,7 @@ import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
 import { createWriteStream, WriteStream } from 'fs';
 // @ts-ignore
-import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa';
+import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.js';
 import type { FileUpload } from 'graphql-upload';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/type-defs';
