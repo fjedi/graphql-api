@@ -8,12 +8,9 @@ import {
 } from '@fjedi/rest-api';
 import { decodeJWT } from '@fjedi/jwt';
 import http from 'http';
-// Parse userAgent
-// import UserAgent from 'useragent';
 // Cookies
 import Cookie from 'cookie';
 import { get, pick, merge } from 'lodash';
-// import git from 'git-rev-sync';
 // Database
 import { DatabaseModels } from '@fjedi/database-client';
 import { redis } from '@fjedi/redis-client';
@@ -29,6 +26,7 @@ import {
   ApolloServerPluginLandingPageGraphQLPlayground,
   ApolloServerPluginLandingPageGraphQLPlaygroundOptions,
 } from 'apollo-server-core';
+import type { ApolloServerPlugin } from 'apollo-server-plugin-base';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer } from 'ws';
@@ -39,6 +37,7 @@ import { FileUpload, graphqlUploadKoa } from 'graphql-upload';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/type-defs';
 import defaultResolvers from './schema/resolvers';
+import sentryPlugin from './plugins/sentry.plugin';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
@@ -241,6 +240,34 @@ export class Server<
             wsServer,
           );
         }
+        const plugins: ApolloServerPlugin<TAppContext>[] = [
+          playground === false
+            ? ApolloServerPluginLandingPageDisabled()
+            : ApolloServerPluginLandingPageGraphQLPlayground(
+                playground === true ? undefined : playground,
+              ),
+          ApolloServerPluginCacheControl({
+            defaultMaxAge: 0,
+          }),
+        ];
+        if (this.sentry) {
+          plugins.push(sentryPlugin(this));
+        }
+        plugins.push(
+          //
+          ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }),
+          {
+            async serverWillStart() {
+              return {
+                async drainServer() {
+                  if (serverCleanup) {
+                    await serverCleanup.dispose();
+                  }
+                },
+              };
+            },
+          },
+        );
 
         const apolloServer = new ApolloServer({
           schema,
@@ -248,28 +275,7 @@ export class Server<
           logger: this.logger,
           introspection: true,
           csrfPrevention: true,
-          plugins: [
-            playground === false
-              ? ApolloServerPluginLandingPageDisabled()
-              : ApolloServerPluginLandingPageGraphQLPlayground(
-                  playground === true ? undefined : playground,
-                ),
-            ApolloServerPluginCacheControl({
-              defaultMaxAge: 0,
-            }),
-            ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }),
-            {
-              async serverWillStart() {
-                return {
-                  async drainServer() {
-                    if (serverCleanup) {
-                      await serverCleanup.dispose();
-                    }
-                  },
-                };
-              },
-            },
-          ],
+          plugins,
           // Bind the current request context, so it's accessible within GraphQL
           context: ({ ctx, connection }) => {
             //
