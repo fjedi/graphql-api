@@ -28,7 +28,8 @@ export default function apolloSentryPlugin<
       return {
         async didEncounterErrors(ctx) {
           console.log('Request did encounter errors', ctx);
-          const operationName = ctx.operation?.operation;
+          const { operationName } = ctx; // name of the query/mutation (logIn, viewer, etc)
+          const operationKind = ctx.operation?.operation; // mutation || 'query' || 'subscription'
 
           // If we couldn't parse the operation (usually invalid queries)
           if (!ctx.operation) {
@@ -93,8 +94,8 @@ export default function apolloSentryPlugin<
               }
 
               // Annotate whether failing operation was query/mutation/subscription
-              if (operationName) {
-                scope.setTag('kind', operationName);
+              if (operationKind) {
+                scope.setTag('kind', operationKind);
               }
 
               // Log query and variables as extras (make sure to strip out sensitive data!)
@@ -118,7 +119,7 @@ export default function apolloSentryPlugin<
               scope.setFingerprint(fingerprint);
               // Add prefix to error's message
               // eslint-disable-next-line no-param-reassign
-              err.message = `[${operationName}]: ${err.message}`;
+              err.name = `[${operationName}]: ${err.name}`;
 
               sentry.captureException(err);
             });
