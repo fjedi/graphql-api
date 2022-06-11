@@ -116,6 +116,9 @@ export default function apolloSentryPlugin<
                 fingerprint.push(operationName);
               }
               scope.setFingerprint(fingerprint);
+              // Add prefix to error's message
+              // eslint-disable-next-line no-param-reassign
+              err.message = `[${operationName}]: ${err.message}`;
 
               sentry.captureException(err);
             });
