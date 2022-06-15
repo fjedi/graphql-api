@@ -124,7 +124,7 @@ const typeDefs = gql`
     beenOnlineAt: Date
     isOnline: Boolean
     props: JSON
-    role: ViewerRole
+    role: ViewerRole!
     email: EmailAddress
     phoneNumber: String
     comments: String
