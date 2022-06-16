@@ -208,12 +208,13 @@ export class Server<
               onConnect: async (context: GraphQLWSContext): Promise<boolean> => {
                 const { User, UserSession } = this.db!.models;
                 const { connectionParams, extra } = context;
-
                 const token =
                   ((connectionParams?.authToken ||
                     connectionParams?.Authorization ||
                     extra.request.headers.authorization) as string | null) ||
-                  Cookie.parse(extra.request.headers.cookie)?.token;
+                  (extra.request.headers.cookie
+                    ? Cookie.parse(extra.request.headers.cookie)?.token
+                    : '');
                 //
                 this.logger.info('graphql-ws.authToken', { token });
                 extra.wsAdapter = 'graphql-ws';
