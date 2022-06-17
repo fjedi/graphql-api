@@ -1,5 +1,6 @@
 import { Server, ParameterizedContext, DefaultState } from '@fjedi/rest-api';
 import { logger } from '@fjedi/logger';
+import { DefaultError } from '@fjedi/errors';
 import { DatabaseModels } from '@fjedi/database-client';
 import type { ApolloServerPlugin } from 'apollo-server-plugin-base';
 // Parse userAgent
@@ -118,9 +119,12 @@ export default function apolloSentryPlugin<
               scope.setFingerprint(fingerprint);
               // Add prefix to error's message
               // eslint-disable-next-line no-param-reassign
-              err.name = `[${operationName}]: ${err.name}`;
-
-              sentry.captureException(err);
+              sentry.captureException(
+                new DefaultError(`[${operationName}]: ${err.name}`, {
+                  originalError: err,
+                  meta: ctx.request,
+                }),
+              );
             });
           });
         },
