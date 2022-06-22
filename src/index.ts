@@ -179,6 +179,7 @@ export class Server<
       onHealthCheck,
       disableHealthCheck,
       schemaDirectives,
+      plugins = [],
       ...apolloServerOptions
     } = this.graphqlOptions;
     if (!typeDefs) {
@@ -243,9 +244,12 @@ export class Server<
             wsServer,
           );
         }
-        const plugins: Array<
-          ApolloServerPlugin<TAppContext> | (() => ApolloServerPlugin<TAppContext>)
-        > = [
+
+        if (this.sentry) {
+          plugins.unshift(sentryPlugin(this));
+        }
+        // Add following plugins as default ones to the beginning of plugins-array
+        plugins.unshift(
           playground === false
             ? ApolloServerPluginLandingPageDisabled()
             : ApolloServerPluginLandingPageGraphQLPlayground(
@@ -254,13 +258,8 @@ export class Server<
           ApolloServerPluginCacheControl({
             defaultMaxAge: 0,
           }),
-        ];
-        if (this.sentry) {
-          plugins.push(sentryPlugin(this));
-        }
-        if (Array.isArray(apolloServerOptions.plugins)) {
-          plugins.push(...apolloServerOptions.plugins);
-        }
+        );
+        // Add to the end of plugins-array following default plugins
         plugins.push(ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }), {
           async serverWillStart() {
             return {
