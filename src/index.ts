@@ -243,7 +243,9 @@ export class Server<
             wsServer,
           );
         }
-        const plugins: ApolloServerPlugin<TAppContext>[] = [
+        const plugins: Array<
+          ApolloServerPlugin<TAppContext> | (() => ApolloServerPlugin<TAppContext>)
+        > = [
           playground === false
             ? ApolloServerPluginLandingPageDisabled()
             : ApolloServerPluginLandingPageGraphQLPlayground(
@@ -256,21 +258,20 @@ export class Server<
         if (this.sentry) {
           plugins.push(sentryPlugin(this));
         }
-        plugins.push(
-          //
-          ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }),
-          {
-            async serverWillStart() {
-              return {
-                async drainServer() {
-                  if (serverCleanup) {
-                    await serverCleanup.dispose();
-                  }
-                },
-              };
-            },
+        if (Array.isArray(apolloServerOptions.plugins)) {
+          plugins.push(...apolloServerOptions.plugins);
+        }
+        plugins.push(ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }), {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                if (serverCleanup) {
+                  await serverCleanup.dispose();
+                }
+              },
+            };
           },
-        );
+        });
 
         const apolloServer = new ApolloServer({
           schema,
