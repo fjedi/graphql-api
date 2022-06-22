@@ -90,7 +90,6 @@ export default function defaultResolvers(server: any) {
     },
     ViewerRole: {
       ADMIN: 'admin',
-      OPERATOR: 'operator',
       USER: 'user',
     },
     Query: {
