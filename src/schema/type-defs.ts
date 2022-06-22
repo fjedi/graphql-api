@@ -89,7 +89,6 @@ const typeDefs = gql`
 
   enum ViewerRole {
     ADMIN
-    OPERATOR
     USER
   }
 
