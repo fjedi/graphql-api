@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "10.4.2",
+  "version": "10.5.0",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -63,6 +63,7 @@
     "cookie": "0.5.0",
     "git-rev-sync": "3.0.2",
     "graphql": "15.8.0",
+    "graphql-jit": "0.7.4",
     "graphql-redis-subscriptions": "2.4.2",
     "graphql-scalar": "0.0.11",
     "graphql-scalars": "1.17.0",
@@ -74,6 +75,7 @@
     "json-buffer": "3.0.1",
     "lodash": "4.17.21",
     "mysql2": "2.3.3",
+    "tiny-lru": "8.0.2",
     "useragent": "2.3.0",
     "ws": "8.8.0"
   },

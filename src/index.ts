@@ -39,6 +39,7 @@ import type { FileUpload } from 'graphql-upload';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/type-defs';
 import defaultResolvers from './schema/resolvers';
+import graphQLSchemaExecutor from './schema/executor';
 import sentryPlugin from './plugins/sentry.plugin';
 
 export { withFilter } from 'graphql-subscriptions';
@@ -274,6 +275,7 @@ export class Server<
 
         const apolloServer = new ApolloServer({
           schema,
+          executor: graphQLSchemaExecutor(schema),
           debug: process.env.NODE_ENV !== 'production',
           logger: this.logger,
           introspection: true,
