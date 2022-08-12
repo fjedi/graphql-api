@@ -78,6 +78,11 @@ const typeDefs = gql`
     direction: SortDirection = DESC
   }
 
+  type PageInfo {
+    current: PositiveInt!
+    total: PositiveInt!
+  }
+
   type RemovedEntry {
     id: ID!
   }
