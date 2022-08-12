@@ -26,7 +26,6 @@ import {
   ApolloServerPluginLandingPageGraphQLPlayground,
   ApolloServerPluginLandingPageGraphQLPlaygroundOptions,
 } from 'apollo-server-core';
-import type { ApolloServerPlugin } from 'apollo-server-plugin-base';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer } from 'ws';
