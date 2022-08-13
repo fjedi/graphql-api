@@ -66,7 +66,7 @@
     "graphql-jit": "0.7.4",
     "graphql-redis-subscriptions": "2.5.0",
     "graphql-scalar": "0.0.11",
-    "graphql-scalars": "1.17.0",
+    "graphql-scalars": "1.18.0",
     "graphql-subscriptions": "2.0.0",
     "graphql-upload": "15.0.2",
     "graphql-ws": "5.10.0",
