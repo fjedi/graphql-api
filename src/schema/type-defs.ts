@@ -79,8 +79,8 @@ const typeDefs = gql`
   }
 
   type PageInfo {
-    current: PositiveInt!
-    total: PositiveInt!
+    current: NonNegativeInt!
+    total: NonNegativeInt!
   }
 
   type RemovedEntry {
