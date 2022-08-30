@@ -104,15 +104,24 @@ export default function defaultResolvers(server: any) {
       },
     },
     Mutation: {
-      async logIn(_: unknown, args: { [k: string]: any }, context: ParameterizedContext) {
+      async logIn(
+        _: unknown,
+        args: { credentials: { email: string; password: string } },
+        context: ParameterizedContext,
+      ) {
         if (context.state.viewer) {
           return context.state.viewer;
+        }
+        if (!server.db) {
+          throw new DefaultError('Login failed due to issues with database connection', {
+            status: 500,
+          });
         }
         const {
           credentials: { email, password },
         } = args as { credentials: { email: string; password: string } };
-        // @ts-ignore
-        const { foundUser, session } = await server.db!.models.User.authByEmail(
+        //
+        const { foundUser, session } = await server.db.models.User.authByEmail(
           {
             email,
             password,
@@ -120,9 +129,10 @@ export default function defaultResolvers(server: any) {
           { context },
         );
 
+        const referrer = context.get('referrer') || context.get('referer') || '';
         server.constructor.setAuthCookie(context, session.token, {
           secure: context.secure,
-          sameSite: context.get('referrer').includes('localhost') ? 'none' : 'strict',
+          sameSite: referrer.includes('localhost') ? 'none' : 'strict',
         });
         // eslint-disable-next-line no-param-reassign
         context.state.viewer = foundUser;
