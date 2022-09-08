@@ -81,6 +81,8 @@ const typeDefs = gql`
   type PageInfo {
     current: NonNegativeInt!
     total: NonNegativeInt!
+    hasPreviousPage: Boolean
+    hasNextPage: Boolean
   }
 
   type RemovedEntry {

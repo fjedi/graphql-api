@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "10.7.9",
+  "version": "10.7.10",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -40,12 +40,12 @@
   },
   "homepage": "https://github.com/fjedi/graphql-api#readme",
   "dependencies": {
-    "@fjedi/database-client": "4.3.5",
+    "@fjedi/database-client": "4.3.6",
     "@fjedi/errors": "1.1.4",
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
     "@fjedi/redis-client": "1.167.1",
-    "@fjedi/rest-api": "3.2.6",
+    "@fjedi/rest-api": "3.2.8",
     "@graphql-tools/delegate": "7.1.5",
     "@graphql-tools/schema": "7.1.5",
     "@types/component-emitter": "1.2.11",
