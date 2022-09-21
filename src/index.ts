@@ -36,7 +36,8 @@ import { createWriteStream, WriteStream } from 'fs';
 import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.js';
 import type { FileUpload } from 'graphql-upload';
 import { finished } from 'stream/promises';
-import { defaultTypeDefs, defaultViewerType } from './schema/type-defs';
+import defaultTypeDefs from './schema/default-type-defs';
+import defaultAuthTypeDefs from './schema/default-auth-type-defs';
 import defaultResolvers from './schema/resolvers';
 import graphQLSchemaExecutor from './schema/executor';
 import sentryPlugin from './plugins/sentry.plugin';
@@ -189,7 +190,7 @@ export class Server<
     }
     const typeDefs = [defaultTypeDefs];
     if (useDefaultViewerType) {
-      typeDefs.push(defaultViewerType);
+      typeDefs.push(defaultAuthTypeDefs);
     }
     typeDefs.push(externalTypeDefs);
 
