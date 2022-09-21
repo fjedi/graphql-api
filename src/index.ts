@@ -36,7 +36,7 @@ import { createWriteStream, WriteStream } from 'fs';
 import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.js';
 import type { FileUpload } from 'graphql-upload';
 import { finished } from 'stream/promises';
-import defaultTypeDefs from './schema/type-defs';
+import { defaultTypeDefs, defaultViewerType } from './schema/type-defs';
 import defaultResolvers from './schema/resolvers';
 import graphQLSchemaExecutor from './schema/executor';
 import sentryPlugin from './plugins/sentry.plugin';
@@ -90,6 +90,7 @@ export type GraphQLServerOptions<
     };
     schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
     playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions | boolean;
+    useDefaultViewerType?: boolean;
   };
 
 export interface GraphQLServerError extends GraphQLError {
@@ -172,7 +173,7 @@ export class Server<
   async startServer(): Promise<http.Server> {
     // GraphQL Server
     const {
-      typeDefs,
+      typeDefs: externalTypeDefs,
       resolvers,
       playground,
       subscriptions,
@@ -180,14 +181,20 @@ export class Server<
       disableHealthCheck,
       schemaDirectives,
       plugins = [],
+      useDefaultViewerType = true,
       ...apolloServerOptions
     } = this.graphqlOptions;
-    if (!typeDefs) {
+    if (!externalTypeDefs) {
       throw new Error('Please provide "typeDefs" value inside "graphqlOptions" object');
     }
+    const typeDefs = [defaultTypeDefs];
+    if (useDefaultViewerType) {
+      typeDefs.push(defaultViewerType);
+    }
+    typeDefs.push(externalTypeDefs);
 
     const schema = makeExecutableSchema({
-      typeDefs: [defaultTypeDefs, typeDefs],
+      typeDefs,
       resolvers: merge(defaultResolvers(this), resolvers(this)),
       schemaDirectives,
     });

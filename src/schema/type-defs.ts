@@ -1,6 +1,6 @@
 import { gql } from 'apollo-server-koa';
 
-const typeDefs = gql`
+export const defaultTypeDefs = gql`
   scalar Upload
 
   #
@@ -120,6 +120,14 @@ const typeDefs = gql`
     filename: String
   }
 
+  type Query {}
+
+  type Mutation {
+    logOut: RemovedEntry!
+  }
+`;
+
+export const defaultViewerType = gql`
   #
   type Viewer {
     id: ID!
@@ -136,14 +144,12 @@ const typeDefs = gql`
     comments: String
   }
 
-  type Query {
+  extend type Query {
     viewer: Viewer! @cacheControl(scope: PRIVATE)
   }
 
-  type Mutation {
+  extend type Mutation {
     logIn(credentials: ViewerCredentialsInput!): Viewer!
     logOut: RemovedEntry!
   }
 `;
-
-export default typeDefs;
