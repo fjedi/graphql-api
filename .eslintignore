@@ -6,3 +6,5 @@ jest.config.js
 lib
 .eslintrc.js
 .eslintrc.cjs
+src/schema/default-auth-type-defs.ts
+src/schema/default-type-defs.ts

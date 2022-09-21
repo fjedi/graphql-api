@@ -120,8 +120,6 @@ const defaultTypeDefs = gql`
     filename: String
   }
 
-  type Query {}
-
   type Mutation {
     logOut: RemovedEntry!
   }

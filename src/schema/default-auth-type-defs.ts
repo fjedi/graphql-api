@@ -17,7 +17,7 @@ const defaultAuthTypeDefs = gql`
     comments: String
   }
 
-  extend type Query {
+  type Query {
     viewer: Viewer! @cacheControl(scope: PRIVATE)
   }
 
