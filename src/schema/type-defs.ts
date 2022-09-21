@@ -141,7 +141,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    logIn(role: ViewerRole, credentials: ViewerCredentialsInput!): Viewer!
+    logIn(credentials: ViewerCredentialsInput!): Viewer!
     logOut: RemovedEntry!
   }
 `;
