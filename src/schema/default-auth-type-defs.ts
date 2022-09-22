@@ -23,7 +23,6 @@ const defaultAuthTypeDefs = gql`
 
   extend type Mutation {
     logIn(credentials: ViewerCredentialsInput!): Viewer!
-    logOut: RemovedEntry!
   }
 `;
 
