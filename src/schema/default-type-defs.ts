@@ -6,6 +6,8 @@ const defaultTypeDefs = gql`
   #
   scalar SanitizedString
 
+  scalar SemVer
+
   # A special custom Scalar type for Dates that converts to a ISO formatted string
   scalar Date
   scalar Time
@@ -39,11 +41,12 @@ const defaultTypeDefs = gql`
   # scalar RGBA
 
   # Network
-  # scalar IPv4
-  # scalar IPv6
-  # scalar ISBN
-  # scalar MAC
-  # scalar Port
+  scalar IP
+  scalar IPv4
+  scalar IPv6
+  scalar MAC
+  scalar Port
+  scalar ISBN
 
   scalar JSON
   scalar JSONObject
