@@ -32,8 +32,7 @@ import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
 import { createWriteStream, WriteStream } from 'fs';
-// @ts-ignore
-import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.js';
+import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.mjs';
 import type { FileUpload } from 'graphql-upload/Upload.mjs';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/default-type-defs';
