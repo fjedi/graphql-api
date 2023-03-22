@@ -26,7 +26,17 @@ const rules = {
     'lines-between-class-members': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    'import/extensions': 1,
+    'import/extensions': [
+      1,
+      'ignorePackages',
+      {
+        pattern: {
+          js: 'never',
+          ts: 'never',
+          mjs: 'always',
+        },
+      },
+    ],
   },
 };
 

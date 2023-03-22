@@ -34,7 +34,7 @@ import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/l
 import { createWriteStream, WriteStream } from 'fs';
 // @ts-ignore
 import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.js';
-import type { FileUpload } from 'graphql-upload';
+import type { FileUpload } from 'graphql-upload/Upload.mjs';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/default-type-defs';
 import defaultAuthTypeDefs from './schema/default-auth-type-defs';
@@ -44,7 +44,8 @@ import sentryPlugin from './plugins/sentry.plugin';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
-export type { FileUpload, UploadOptions } from 'graphql-upload';
+export type { FileUpload } from 'graphql-upload/Upload.mjs';
+export { default as Upload } from 'graphql-upload/Upload.mjs';
 
 export type {
   RouteMethod,
