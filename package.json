@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "11.0.5",
+  "version": "11.0.6",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/index.js",
   "module": "./lib/index.js",

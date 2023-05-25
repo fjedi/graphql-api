@@ -40,7 +40,9 @@ import {
 import { SanitizedString } from './scalars';
 
 export default async function defaultResolvers(server: any) {
+  const GraphQLUpload = await import('graphql-upload/GraphQLUpload.mjs');
   return {
+    Upload: GraphQLUpload.default,
     //
     SanitizedString,
     //

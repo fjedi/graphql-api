@@ -11,7 +11,7 @@ const rules = {
     ecmaVersion: 2020,
     sourceType: 'module',
     jsx: true,
-    project: 'tsconfig-cjs.json',
+    project: 'tsconfig.json',
   },
   env: {
     es6: true,
