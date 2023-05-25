@@ -22,7 +22,7 @@ jobs:
       - run: npm run lint
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-      - uses: JS-DevTools/npm-publish@v1
+      - uses: JS-DevTools/npm-publish@v2
         with:
           token: ${{ secrets.NPM_AUTH_TOKEN }}
         env:
