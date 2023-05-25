@@ -7,7 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./lib/esm",
+    "outDir": "./lib",
     // Search under node_modules for non-relative imports.
     "moduleResolution": "node",
     "maxNodeModuleJsDepth": 10,
