@@ -80,7 +80,7 @@ export interface ServerParams<
 export type GraphQLServerOptions<
   TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels,
-> = Config &
+> = Omit<Config, 'resolvers'> &
   Omit<ServerRegistration, 'app'> & {
     path: string;
     typeDefs?: DocumentNode;
