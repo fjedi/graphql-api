@@ -42,7 +42,9 @@ import sentryPlugin from './plugins/sentry.plugin.js';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
+export { GraphQLError } from 'graphql';
 
+export type { DocumentNode } from 'graphql';
 export type {
   RouteMethod,
   RouteContext,
