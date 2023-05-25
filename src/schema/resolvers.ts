@@ -1,6 +1,5 @@
 import { DefaultContext, ParameterizedContext } from '@fjedi/rest-api';
 import { DefaultError } from '@fjedi/errors';
-import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs';
 import {
   DateTimeResolver,
   EmailAddressResolver,
@@ -40,9 +39,8 @@ import {
 } from 'graphql-scalars';
 import { SanitizedString } from './scalars';
 
-export default function defaultResolvers(server: any) {
+export default async function defaultResolvers(server: any) {
   return {
-    Upload: GraphQLUpload,
     //
     SanitizedString,
     //

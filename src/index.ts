@@ -32,7 +32,6 @@ import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
 import { createWriteStream, WriteStream } from 'fs';
-import graphqlUploadKoa from 'graphql-upload/graphqlUploadKoa.mjs';
 import type { FileUpload } from 'graphql-upload/Upload.mjs';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/default-type-defs';
@@ -43,8 +42,6 @@ import sentryPlugin from './plugins/sentry.plugin';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
-export type { FileUpload } from 'graphql-upload/Upload.mjs';
-export { default as Upload } from 'graphql-upload/Upload.mjs';
 
 export type {
   RouteMethod,
@@ -89,7 +86,7 @@ export type GraphQLServerOptions<
     subscriptions?: GraphQLWSOptions & {
       path: WSServerOptions['path'];
     };
-    schemaDirectives?: IExecutableSchemaDefinition<TAppContext>['schemaDirectives'];
+    schemaExtensions?: IExecutableSchemaDefinition<TAppContext>['schemaExtensions'];
     playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions | boolean;
     useDefaultViewerType?: boolean;
   };
@@ -123,35 +120,6 @@ export class Server<
     this.startWSServer = this.startWSServer.bind(this);
   }
 
-  // formatError(graphQLError: GraphQLServerError) {
-  //   const { originalError, extensions } = graphQLError;
-  //   //
-  //   if (extensions?.code === 'PERSISTED_QUERY_NOT_FOUND') {
-  //     return graphQLError;
-  //   }
-  //   //
-  //   if (this.environment === 'development') {
-  //     this.logger.error(graphQLError);
-  //     return graphQLError;
-  //   }
-  //   const errorCode = extensions?.exception?.status || originalError?.status;
-  //   const isPublicError =
-  //     typeof errorCode === 'number' &&
-  //     (errorCode < 500 ||
-  //       (!Server.SYSTEM_ERROR_REGEXP.test(originalError?.message) &&
-  //         !Server.SYSTEM_ERROR_REGEXP.test(extensions?.exception?.name)));
-  //   if (isPublicError) {
-  //     return graphQLError;
-  //   }
-  //   // eslint-disable-next-line no-param-reassign
-  //   graphQLError.message = Server.DEFAULT_ERROR_MESSAGE;
-  //   // @ts-ignore
-  //   // eslint-disable-next-line no-param-reassign
-  //   graphQLError.extensions = undefined;
-  //   //
-  //   return graphQLError;
-  // }
-
   static async readGraphQLFileStream(
     file: Promise<FileUpload>,
     dest: WriteStream | string,
@@ -180,7 +148,7 @@ export class Server<
       subscriptions,
       onHealthCheck,
       disableHealthCheck,
-      schemaDirectives,
+      schemaExtensions,
       plugins = [],
       useDefaultViewerType = true,
       ...apolloServerOptions
@@ -196,8 +164,8 @@ export class Server<
 
     const schema = makeExecutableSchema({
       typeDefs,
-      resolvers: merge(defaultResolvers(this), resolvers(this)),
-      schemaDirectives,
+      resolvers: merge(await defaultResolvers(this), await resolvers(this)),
+      schemaExtensions,
     });
     //
     return super.startServer({
@@ -209,7 +177,7 @@ export class Server<
             server: this.httpServer,
             path: subscriptions?.path ?? '/subscriptions',
           });
-          // Save the returned server's info so we can shut down this server later
+          // Save the returned server's info, so we can shut down this server later
           serverCleanup = useServer(
             {
               schema,
@@ -308,7 +276,8 @@ export class Server<
         });
         await apolloServer.start();
         // This middleware should be added before calling `applyMiddleware`.
-        this.koaApp.use(graphqlUploadKoa());
+        const graphqlUploadKoa = await import('graphql-upload/graphqlUploadKoa.mjs');
+        this.koaApp.use(graphqlUploadKoa.default());
         //
         apolloServer.applyMiddleware({
           // @ts-ignore

@@ -10,6 +10,7 @@ describe('Test api server', function () {
   afterAll(async () => {
     console.log('Emit afterAll test-hook');
     server?.redis?.end(true);
+    server?.db?.redis?.end(true);
     await server?.pubsub?.close();
   });
 
