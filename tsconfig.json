@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./lib",
     // Search under node_modules for non-relative imports.
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "maxNodeModuleJsDepth": 10,
     "types": [
       "./src/types",

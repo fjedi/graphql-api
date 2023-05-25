@@ -1,13 +1,13 @@
 import { GraphQLExecutor } from 'apollo-server-core';
 import { GraphQLSchema } from 'graphql';
-import { lru } from 'tiny-lru';
 import { CompiledQuery, compileQuery, CompilerOptions, isCompiledQuery } from 'graphql-jit';
 
-export default function graphQLSchemaExecutor(
+export default async function graphQLSchemaExecutor(
   schema: GraphQLSchema,
   cacheSize = 1024,
   compilerOpts: Partial<CompilerOptions> = {},
-): GraphQLExecutor {
+): Promise<GraphQLExecutor> {
+  const { lru } = await import('tiny-lru');
   const cache = lru<CompiledQuery>(cacheSize);
   return async ({ context, document, operationName, request, queryHash }) => {
     const prefix = operationName || 'NotParametrized';

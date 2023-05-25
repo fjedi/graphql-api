@@ -250,7 +250,7 @@ export class Server<
 
         const apolloServer = new ApolloServer({
           schema,
-          executor: graphQLSchemaExecutor(schema),
+          executor: await graphQLSchemaExecutor(schema),
           debug: process.env.NODE_ENV !== 'production',
           logger: this.logger,
           introspection: true,
