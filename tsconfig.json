@@ -2,8 +2,8 @@
   "compilerOptions": {
     "allowJs": true,
     "declaration": true,
-    "target": "es6",
-    "module": "NodeNext",
+    "target": "ES2022",
+    "module": "CommonJS",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

@@ -2,7 +2,6 @@
   "name": "@fjedi/graphql-api",
   "version": "11.0.8",
   "description": "GraphQL API with built-in REST API support",
-  "type": "module",
   "main": "./lib/index.js",
   "files": [
     "lib/"
@@ -40,7 +39,6 @@
   },
   "homepage": "https://github.com/fjedi/graphql-api#readme",
   "dependencies": {
-    "@fjedi/database-client": "4.6.7",
     "@fjedi/errors": "1.1.4",
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
@@ -100,6 +98,9 @@
     "rimraf": "5.0.1",
     "ts-jest": "29.1.0",
     "typescript": "5.0.4"
+  },
+  "peerDependencies": {
+    "@fjedi/database-client": "4.6.7"
   },
   "lint-staged": {
     "*.(js|ts)": [
