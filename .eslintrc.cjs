@@ -10,12 +10,12 @@ const rules = {
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    jsx: true,
+    jsx: false,
     project: 'tsconfig.json',
   },
   env: {
     es6: true,
-    browser: true,
+    browser: false,
     node: true,
   },
   parser: '@typescript-eslint/parser',

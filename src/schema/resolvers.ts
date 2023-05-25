@@ -37,7 +37,7 @@ import {
   // ObjectIDResolver,
   // @ts-ignore
 } from 'graphql-scalars';
-import { SanitizedString } from './scalars';
+import { SanitizedString } from './scalars.js';
 
 export default async function defaultResolvers(server: any) {
   const GraphQLUpload = await import('graphql-upload/GraphQLUpload.mjs');

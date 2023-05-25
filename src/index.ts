@@ -34,11 +34,11 @@ import { useServer } from 'graphql-ws/lib/use/ws';
 import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws';
 import { createWriteStream, WriteStream } from 'fs';
 import { finished } from 'stream/promises';
-import defaultTypeDefs from './schema/default-type-defs';
-import defaultAuthTypeDefs from './schema/default-auth-type-defs';
-import defaultResolvers from './schema/resolvers';
-import graphQLSchemaExecutor from './schema/executor';
-import sentryPlugin from './plugins/sentry.plugin';
+import defaultTypeDefs from './schema/default-type-defs.js';
+import defaultAuthTypeDefs from './schema/default-auth-type-defs.js';
+import defaultResolvers from './schema/resolvers.js';
+import graphQLSchemaExecutor from './schema/executor.js';
+import sentryPlugin from './plugins/sentry.plugin.js';
 
 export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
