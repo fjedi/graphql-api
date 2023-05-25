@@ -2,14 +2,14 @@
   "compilerOptions": {
     "allowJs": true,
     "declaration": true,
-    "target": "ES2015",
+    "target": "es6",
     "module": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./lib",
     // Search under node_modules for non-relative imports.
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "maxNodeModuleJsDepth": 10,
     "types": [
       "./src/types",

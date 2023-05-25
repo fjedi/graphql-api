@@ -4,6 +4,7 @@ import {
   ServerParams as APIServerParams,
   ContextState,
   WSServerOptions,
+  WSServer,
   ParameterizedContext,
 } from '@fjedi/rest-api';
 import { decodeJWT } from '@fjedi/jwt';
@@ -30,9 +31,8 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { RedisCache } from 'apollo-server-cache-redis';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
-import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws/lib';
+import type { ServerOptions as GraphQLWSOptions, Disposable } from 'graphql-ws';
 import { createWriteStream, WriteStream } from 'fs';
-import type { FileUpload } from 'graphql-upload/Upload.mjs';
 import { finished } from 'stream/promises';
 import defaultTypeDefs from './schema/default-type-defs';
 import defaultAuthTypeDefs from './schema/default-auth-type-defs';
@@ -298,8 +298,10 @@ export class Server<
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async startWSServer(httpServerOrPort: number | http.Server, o?: Partial<WSServerOptions>) {
+  async startWSServer(
+    httpServerOrPort: number | http.Server,
+    o?: Partial<WSServerOptions>,
+  ): Promise<WSServer> {
     const ws = await super.startWSServer(httpServerOrPort, o);
     if (this.graphqlOptions?.subscriptions) {
       if (httpServerOrPort === this.httpServer || this.port === httpServerOrPort) {

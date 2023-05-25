@@ -1,4 +1,5 @@
 import { Context } from 'graphql-ws';
+import { ReadStream } from 'fs-capacitor';
 import type { DefaultState } from '@fjedi/rest-api';
 
 type CustomContextFields<TContextState = DefaultState> = {
@@ -17,5 +18,12 @@ declare global {
     extra: TContextState;
     authToken?: string;
     Authorization?: string;
+  }
+
+  interface FileUpload {
+    filename: string;
+    mimetype: string;
+    encoding: string;
+    createReadStream(): ReadStream;
   }
 }
