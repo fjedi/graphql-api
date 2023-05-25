@@ -44,6 +44,7 @@ export { withFilter } from 'graphql-subscriptions';
 export { gql } from 'apollo-server-koa';
 export { GraphQLError } from 'graphql';
 
+export type { Config } from 'apollo-server-koa';
 export type { DocumentNode } from 'graphql';
 export type {
   RouteMethod,
@@ -81,7 +82,6 @@ export type GraphQLServerOptions<
   TDatabaseModels extends DatabaseModels,
 > = Config &
   Omit<ServerRegistration, 'app'> & {
-    // formatError: (e: GraphQLServerError) => GraphQLFormattedError<Record<string, unknown>>;
     path: string;
     typeDefs?: DocumentNode;
     resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
