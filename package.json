@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-api",
-  "version": "11.0.14",
+  "version": "11.0.15",
   "description": "GraphQL API with built-in REST API support",
   "main": "./lib/index.js",
   "files": [
@@ -43,7 +43,7 @@
     "@fjedi/jwt": "1.0.4",
     "@fjedi/logger": "1.46.3",
     "@fjedi/redis-client": "1.167.1",
-    "@fjedi/rest-api": "4.0.4",
+    "@fjedi/rest-api": "4.0.5",
     "@graphql-tools/delegate": "10.0.0",
     "@graphql-tools/schema": "10.0.0",
     "@types/component-emitter": "1.2.11",
