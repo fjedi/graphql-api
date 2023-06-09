@@ -1,6 +1,7 @@
 import { Context } from 'graphql-ws';
 import { ReadStream } from 'fs-capacitor';
 import type { DefaultState } from '@fjedi/rest-api';
+import type { Extra } from 'graphql-ws/lib/use/ws';
 
 type CustomContextFields<TContextState = DefaultState> = {
   authToken?: string;
@@ -15,7 +16,7 @@ declare global {
 
   interface GraphQLWSContext<TContextState = DefaultState>
     extends Context<CustomContextFields<TContextState>> {
-    extra: TContextState;
+    extra: Extra & TContextState;
     authToken?: string;
     Authorization?: string;
   }
