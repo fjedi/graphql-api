@@ -12,9 +12,9 @@ import { decodeJWT } from '@fjedi/jwt';
 import http from 'http';
 // Cookies
 import Cookie from 'cookie';
-import { get, pick, merge, omit } from 'lodash';
+import { get, pick, merge } from 'lodash';
 // Database
-import { DatabaseConnection, DatabaseModels } from '@fjedi/database-client';
+import { DatabaseModels } from '@fjedi/database-client';
 import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
@@ -88,7 +88,6 @@ export type GraphQLServerOptions<
     resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
     subscriptions?: GraphQLWSOptions & {
       path: WSServerOptions['path'];
-      keepAlive?: number;
     };
     schemaExtensions?: IExecutableSchemaDefinition<TAppContext>['schemaExtensions'];
     playground?: ApolloServerPluginLandingPageGraphQLPlaygroundOptions | boolean;
@@ -182,13 +181,7 @@ export class Server<
             path: subscriptions?.path ?? '/subscriptions',
           });
           // Save the returned server's info, so we can shut down this server later
-          serverCleanup = useServer<
-            Record<string, unknown>,
-            {
-              db: DatabaseConnection<TDatabaseModels>;
-              state: GraphQLWSContext<TAppContext>;
-            }
-          >(
+          serverCleanup = useServer(
             {
               schema,
               context: ({ extra }) => ({ db: this.db, state: extra }),
@@ -226,7 +219,7 @@ export class Server<
                     //
                     if (session) {
                       const viewer = await User.findByPk(sub);
-                      context.extra = Object.assign(extra, { viewer, token, session });
+                      context.extra = { viewer, token, session };
 
                       if (!viewer) {
                         return false;
@@ -257,10 +250,9 @@ export class Server<
                 }
                 return false;
               },
-              ...omit(subscriptions, ['keepAlive']),
+              ...subscriptions,
             },
             wsServer,
-            subscriptions.keepAlive ?? 10_000, // Default to 10 seconds
           );
         }
 
