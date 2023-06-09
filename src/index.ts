@@ -6,6 +6,7 @@ import {
   WSServerOptions,
   WSServer,
   ParameterizedContext,
+  time,
 } from '@fjedi/rest-api';
 import { decodeJWT } from '@fjedi/jwt';
 import http from 'http';
@@ -185,7 +186,17 @@ export class Server<
               schema,
               context: ({ extra }) => ({ db: this.db, state: extra }),
               onConnect: async (context: GraphQLWSContext): Promise<boolean> => {
-                const { User, UserSession } = this.db!.models;
+                if (!this.db) {
+                  this.logger.warn('[WS] No DB found, cannot authorize graphql-ws connection');
+                  return false;
+                }
+                const { User, UserSession } = this.db.models;
+                if (!User || !UserSession) {
+                  this.logger.warn(
+                    '[WS] In order to authorize graphql-ws connection, both "User" and "UserSession" db-models should be initialized',
+                  );
+                  return false;
+                }
                 const { connectionParams, extra } = context;
                 const token =
                   ((connectionParams?.authToken ||
@@ -209,6 +220,28 @@ export class Server<
                     if (session) {
                       const viewer = await User.findByPk(sub);
                       context.extra = { viewer, token, session };
+
+                      if (!viewer) {
+                        return false;
+                      }
+
+                      if ('beenOnlineAt' in viewer) {
+                        const { beenOnlineAt } = viewer;
+                        // If user hasn't been online for more than 60 seconds
+                        if (!beenOnlineAt || time().diff(beenOnlineAt as string, 'second') > 60) {
+                          viewer
+                            .update({
+                              beenOnlineAt: time().toISOString(),
+                            })
+                            .catch((e) =>
+                              this.logger.warn(
+                                '[WS] Failed to update viewer.beenOnlineAt field',
+                                e,
+                              ),
+                            );
+                        }
+                      }
+
                       return true;
                     }
                   } catch (error) {
