@@ -20,10 +20,13 @@ export default function apolloSentryPlugin<
   TAppContext extends ParameterizedContext<DefaultState, ParameterizedContext>,
   TDatabaseModels extends DatabaseModels,
 >(server: Server<TAppContext, TDatabaseModels>): ApolloServerPlugin<TAppContext> {
-  const sentry = server!.sentry!;
+  if (!server.sentry) {
+    return {};
+  }
+  const { sentry } = server;
   return {
     // server lifecycle event
-    async requestDidStart(_: unknown) {
+    async requestDidStart() {
       /* Within this returned object, define functions that respond
            to request-specific lifecycle events. */
       return {

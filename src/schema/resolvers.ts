@@ -1,5 +1,6 @@
-import { DefaultContext, ParameterizedContext } from '@fjedi/rest-api';
+import { DefaultContext, ParameterizedContext, Server as APIServer } from '@fjedi/rest-api';
 import { DefaultError } from '@fjedi/errors';
+import { Model } from '@fjedi/database-client';
 import {
   DateTimeResolver,
   EmailAddressResolver,
@@ -38,8 +39,9 @@ import {
   // @ts-ignore
 } from 'graphql-scalars';
 import { SanitizedString } from './scalars.js';
+import type { Server } from '../index';
 
-export default async function defaultResolvers(server: any) {
+export default async function defaultResolvers<T extends Server>(server: T) {
   const GraphQLUpload = await import('graphql-upload/GraphQLUpload.mjs');
   return {
     Upload: GraphQLUpload.default,
@@ -123,7 +125,14 @@ export default async function defaultResolvers(server: any) {
           credentials: { email, password },
         } = args as { credentials: { email: string; password: string } };
         //
-        const { foundUser, session } = await server.db.models.User.authByEmail(
+        const { foundUser, session } = await (
+          server.db.models.User as unknown as {
+            authByEmail: (
+              o: { email: string; password: string },
+              p: { context: ParameterizedContext },
+            ) => Promise<{ foundUser: Model; session: Model }>;
+          }
+        ).authByEmail(
           {
             email,
             password,
@@ -132,10 +141,12 @@ export default async function defaultResolvers(server: any) {
         );
 
         const referrer = context.get('referrer') || context.get('referer') || '';
-        server.constructor.setAuthCookie(context, session.token, {
-          secure: context.secure,
-          sameSite: referrer.includes('localhost') ? 'none' : 'strict',
-        });
+        if ('token' in session && typeof session.token === 'string') {
+          APIServer.setAuthCookie(context, session.token, {
+            secure: context.secure,
+            sameSite: referrer.includes('localhost') ? 'none' : 'strict',
+          });
+        }
         // eslint-disable-next-line no-param-reassign
         context.state.viewer = foundUser;
 

@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { createStringScalar, createIntScalar, createFloatScalar } from 'graphql-scalar';
+import { createStringScalar } from 'graphql-scalar';
 
 // const stringScalar = createStringScalar({
 //   name: string;

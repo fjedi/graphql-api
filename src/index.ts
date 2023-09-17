@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable lines-between-class-members  */
 import {
   Server as APIServer,
@@ -14,7 +15,7 @@ import http from 'http';
 import Cookie from 'cookie';
 import { get, pick, merge } from 'lodash';
 // Database
-import { DatabaseModels } from '@fjedi/database-client';
+import { DatabaseModels, Model } from '@fjedi/database-client';
 import { redis } from '@fjedi/redis-client';
 import { DefaultError } from '@fjedi/errors';
 //
@@ -71,21 +72,26 @@ export type {
   DefaultState,
 } from '@fjedi/rest-api';
 export * from '@fjedi/rest-api';
+
+export type DefaultServerContext = ParameterizedContext<ContextState, ParameterizedContext>;
+
 export interface ServerParams<
-  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
+  TAppContext extends DefaultServerContext,
   TDatabaseModels extends DatabaseModels,
 > extends APIServerParams<TAppContext, TDatabaseModels> {
   graphqlOptions: GraphQLServerOptions<TAppContext, TDatabaseModels>;
 }
 
 export type GraphQLServerOptions<
-  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
-  TDatabaseModels extends DatabaseModels,
+  TAppContext extends DefaultServerContext = DefaultServerContext,
+  TDatabaseModels extends DatabaseModels = DatabaseModels,
 > = Omit<Config, 'resolvers'> &
   Omit<ServerRegistration, 'app'> & {
     path: string;
     typeDefs?: DocumentNode;
-    resolvers: (s: Server<TAppContext, TDatabaseModels>) => Config['resolvers'];
+    resolvers: (
+      s: Server<TAppContext, TDatabaseModels>,
+    ) => Config['resolvers'] | Promise<Config['resolvers']>;
     subscriptions?: GraphQLWSOptions & {
       path: WSServerOptions['path'];
     };
@@ -99,8 +105,8 @@ export interface GraphQLServerError extends GraphQLError {
 }
 
 export class Server<
-  TAppContext extends ParameterizedContext<ContextState, ParameterizedContext>,
-  TDatabaseModels extends DatabaseModels,
+  TAppContext extends DefaultServerContext = DefaultServerContext,
+  TDatabaseModels extends DatabaseModels = DatabaseModels,
 > extends APIServer<TAppContext, TDatabaseModels> {
   pubsub: RedisPubSub;
   // Graphql-related staff
@@ -167,7 +173,10 @@ export class Server<
 
     const schema = makeExecutableSchema({
       typeDefs,
-      resolvers: merge(await defaultResolvers(this), await resolvers(this)),
+      resolvers: merge(
+        await defaultResolvers(this as unknown as Server<DefaultServerContext, DatabaseModels>),
+        await resolvers(this),
+      ),
       schemaExtensions,
     });
     //
@@ -229,7 +238,7 @@ export class Server<
                         const { beenOnlineAt } = viewer;
                         // If user hasn't been online for more than 60 seconds
                         if (!beenOnlineAt || time().diff(beenOnlineAt as string, 'second') > 60) {
-                          viewer
+                          (viewer as Model)
                             .update({
                               beenOnlineAt: time().toISOString(),
                             })
