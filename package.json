@@ -113,7 +113,6 @@
     "npm": ">=8"
   },
   "overrides": {
-    "graphql@>12 <20": "$graphql",
     "graphql-subscriptions@1": "$graphql-subscriptions"
   }
 }
