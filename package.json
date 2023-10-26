@@ -68,7 +68,7 @@
     "graphql-scalars": "1.22.2",
     "graphql-subscriptions": "2.0.0",
     "graphql-upload": "16.0.2",
-    "graphql-ws": "5.14.0",
+    "graphql-ws": "5.14.2",
     "invariant": "2.2.4",
     "ip": "1.1.8",
     "json-buffer": "3.0.1",
