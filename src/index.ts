@@ -132,6 +132,11 @@ export class Server<
   static async readGraphQLFileStream(
     file: Promise<FileUpload>,
     dest: WriteStream | string,
+    options?: {
+      onError?: (error: Error) => void;
+      onData?: (data: unknown) => void;
+      onEnd?: (result?: unknown) => void;
+    },
   ): Promise<Omit<FileUpload, 'createReadStream'>> {
     const { createReadStream, ...bypassProps } = await file;
     // Invoking the `createReadStream` will return a Readable Stream.
@@ -140,6 +145,17 @@ export class Server<
 
     const out = typeof dest === 'string' ? createWriteStream(dest) : dest;
     stream.pipe(out);
+
+    if (options?.onError) {
+      stream.on('error', options.onError);
+    }
+    if (options?.onData) {
+      stream.on('data', options.onData);
+    }
+    if (options?.onEnd) {
+      stream.on('end', options.onEnd);
+    }
+
     await finished(out);
 
     return bypassProps;
