@@ -134,7 +134,7 @@ export class Server<
     dest: WriteStream | string,
     options?: {
       onError?: (error: Error) => void;
-      onData?: (data: unknown) => void;
+      onData?: (data: Buffer) => void;
       onEnd?: (result?: unknown) => void;
     },
   ): Promise<Omit<FileUpload, 'createReadStream'>> {
@@ -146,16 +146,26 @@ export class Server<
     const out = typeof dest === 'string' ? createWriteStream(dest) : dest;
     stream.pipe(out);
 
-    if (options?.onError) {
-      stream.on('error', options.onError);
+    const { onData, onError, onEnd } = options ?? {};
+    if (onData || onError || onEnd) {
+      return new Promise((resolve, reject) => {
+        stream.on('error', (error) => {
+          if (onError) {
+            onError(error);
+          }
+          reject();
+        });
+        if (onData) {
+          stream.on('data', onData);
+        }
+        stream.on('end', () => {
+          if (onEnd) {
+            onEnd();
+          }
+          resolve(bypassProps);
+        });
+      });
     }
-    if (options?.onData) {
-      stream.on('data', options.onData);
-    }
-    if (options?.onEnd) {
-      stream.on('end', options.onEnd);
-    }
-
     await finished(out);
 
     return bypassProps;
