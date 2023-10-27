@@ -85,7 +85,7 @@ export interface ServerParams<
 export type GraphQLServerOptions<
   TAppContext extends DefaultServerContext = DefaultServerContext,
   TDatabaseModels extends DatabaseModels = DatabaseModels,
-> = Omit<Config, 'resolvers'> &
+> = Omit<Config, 'resolvers' | 'typeDefs'> &
   Omit<ServerRegistration, 'app'> & {
     path: string;
     typeDefs?: DocumentNode;
