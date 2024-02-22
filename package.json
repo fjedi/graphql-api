@@ -70,7 +70,7 @@
     "graphql-upload": "16.0.2",
     "graphql-ws": "5.14.2",
     "invariant": "2.2.4",
-    "ip": "1.1.8",
+    "ip": "1.1.9",
     "json-buffer": "3.0.1",
     "lodash": "4.17.21",
     "mysql2": "3.6.1",
