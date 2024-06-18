@@ -76,7 +76,7 @@
     "mysql2": "3.6.1",
     "tiny-lru": "11.1.2",
     "useragent": "2.3.0",
-    "ws": "8.14.2"
+    "ws": "8.17.1"
   },
   "devDependencies": {
     "@types/cookie": "0.5.2",
